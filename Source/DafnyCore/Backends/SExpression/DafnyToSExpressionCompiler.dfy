@@ -1,8 +1,7 @@
 include "../Dafny/AST.dfy"
 
-
-module DafnyToSExpressionCompiler {
-    import DAST
+module {:extern "DCOMPSEXPR"} DafnyToSExpressionCompiler {
+    import opened DAST
 
     method Compile(p: seq<DAST.Module>) returns (s: string) {
         s := "Hello from Compile!";
