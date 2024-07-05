@@ -211,103 +211,188 @@ module {:extern} DafnyToSExpressionCompiler {
                         MapJoinExpressionToSexpr(args)])
     case NewArray(dims, typ) =>
       StringSeqToSexpr(["Expression.NewArray",
-                          MapJoinExpressionToSexpr(dims),
-                          TypeToSexpr(typ)])
+                        MapJoinExpressionToSexpr(dims),
+                        TypeToSexpr(typ)])
     case DatatypeValue(datatypeType, typeArgs, variant, isCo, contents) =>
       StringSeqToSexpr(["Expression.DatatypeValue",
-                          DatatypeTypeToSexpr(datatypeType),
-                          MapJoin(TypeToSexpr, typeArgs),
-                          NameToSexpr(variant),
-                          Std.Strings.OfBool(isCo),
-                          assert forall x :: x in contents ==> x.1 < expr;
-                          MapJoin(x requires x in contents =>
+                        DatatypeTypeToSexpr(datatypeType),
+                        MapJoin(TypeToSexpr, typeArgs),
+                        NameToSexpr(variant),
+                        Std.Strings.OfBool(isCo),
+                        assert forall x :: x in contents ==> x.1 < expr;
+                        MapJoin(x requires x in contents =>
                                   TwoTupleToSexpr(x,
                                                   y => y,
                                                   (z) requires z < expr =>
                                                     ExpressionToSexpr(z)),
-                                                  contents)])
+                                contents)])
     case Convert(value, from, typ) =>
       StringSeqToSexpr(["Expression.Convert",
-                          ExpressionToSexpr(value),
-                          TypeToSexpr(from),
-                          TypeToSexpr(typ)])
+                        ExpressionToSexpr(value),
+                        TypeToSexpr(from),
+                        TypeToSexpr(typ)])
     case SeqConstruct(length, elem) =>
       StringSeqToSexpr(["Expression.SeqConstruct",
-                          ExpressionToSexpr(length),
-                          ExpressionToSexpr(elem)])
+                        ExpressionToSexpr(length),
+                        ExpressionToSexpr(elem)])
     case SeqValue(elements, typ) =>
       StringSeqToSexpr(["Expression.SeqValue",
-                          MapJoinExpressionToSexpr(elements),
-                          TypeToSexpr(typ)])
+                        MapJoinExpressionToSexpr(elements),
+                        TypeToSexpr(typ)])
     case SetValue(elements) =>
       StringSeqToSexpr(["Expression.SetValue",
-                          MapJoinExpressionToSexpr(elements)])
+                        MapJoinExpressionToSexpr(elements)])
     case MultisetValue(elements) =>
       StringSeqToSexpr(["Expression.MultisetValue",
-                          MapJoinExpressionToSexpr(elements)])
+                        MapJoinExpressionToSexpr(elements)])
     case MapValue(mapElems) =>
       StringSeqToSexpr(["Expression.MapValue",
-                          assert forall x :: x in mapElems ==> (x.0 < expr && x.1 < expr);
-                          MapJoin(x requires x in mapElems =>
+                        assert forall x :: x in mapElems ==> (x.0 < expr && x.1 < expr);
+                        MapJoin(x requires x in mapElems =>
                                   TwoTupleToSexpr(x,
                                                   (y) requires y < expr =>
                                                     ExpressionToSexpr(y),
                                                   (z) requires z < expr =>
                                                     ExpressionToSexpr(z)),
-                                                  mapElems)])
+                                mapElems)])
     case MapBuilder(keyType, valueType) =>
       StringSeqToSexpr(["Expression.MapBuilder",
-                          TypeToSexpr(keyType),
-                          TypeToSexpr(valueType)])
+                        TypeToSexpr(keyType),
+                        TypeToSexpr(valueType)])
     case SeqUpdate(expr', indexExpr, value) =>
       StringSeqToSexpr(["Expression.SeqUpdate",
-                          ExpressionToSexpr(expr'),
-                          ExpressionToSexpr(indexExpr),
-                          ExpressionToSexpr(value)])
-    case MapUpdate(expr', indexExpr, value) => "TODO"
-    case SetBuilder(elemType) => "TODO"
-    case ToMultiset(expr') => "TODO"
-    case This() => "TODO"
-    case Ite(cond, thn, els) => "TODO"
-    case UnOp(unOp, expr', format1) => "TODO"
-    case BinOp(op, left, right, format2) => "TODO"
-    case ArrayLen(expr', dim) => "TODO"
-    case MapKeys(expr') => "TODO"
-    case MapValues(expr') => "TODO"
-    case Select(expr', field, isConstant, onDatatype, fieldType) => "TODO"
-    case SelectFn(expr', field, onDatatype, isStatic, arity) => "TODO"
-    case Index(expr', collKind, indices) => "TODO"
+                        ExpressionToSexpr(expr'),
+                        ExpressionToSexpr(indexExpr),
+                        ExpressionToSexpr(value)])
+    case MapUpdate(expr', indexExpr, value) =>
+      StringSeqToSexpr(["Expression.MapUpdate",
+                        ExpressionToSexpr(expr'),
+                        ExpressionToSexpr(indexExpr),
+                        ExpressionToSexpr(value)])
+    case SetBuilder(elemType) =>
+      StringSeqToSexpr(["Expression.SetBuilder",
+                        TypeToSexpr(elemType)])
+    case ToMultiset(expr') =>
+      StringSeqToSexpr(["Expression.ToMultiset",
+                        ExpressionToSexpr(expr')])
+    case This() =>
+      StringSeqToSexpr(["Expression.This"])
+    case Ite(cond, thn, els) =>
+      StringSeqToSexpr(["Expression.Ite",
+                        ExpressionToSexpr(cond),
+                        ExpressionToSexpr(thn),
+                        ExpressionToSexpr(els)])
+    // Ignore formatting
+    case UnOp(unOp, expr', _) =>
+      StringSeqToSexpr(["Expression.UnOp",
+                        UnaryOpToSexpr(unOp),
+                        ExpressionToSexpr(expr')])
+    // Ignore formatting
+    case BinOp(op, left, right, _) =>
+      StringSeqToSexpr(["Expression.BinOp",
+                        BinOpToSexpr(op),
+                        ExpressionToSexpr(left),
+                        ExpressionToSexpr(right)])
+    case ArrayLen(expr', dim) =>
+      StringSeqToSexpr(["Expression.ArrayLen",
+                        ExpressionToSexpr(expr'),
+                        Std.Strings.OfNat(dim)])
+    case MapKeys(expr') =>
+      StringSeqToSexpr(["Expression.MapKeys",
+                        ExpressionToSexpr(expr')])
+    case MapValues(expr') =>
+      StringSeqToSexpr(["Expression.MapValues",
+                        ExpressionToSexpr(expr')])
+    case Select(expr', field, isConstant, onDatatype, fieldType) =>
+      StringSeqToSexpr(["Expression.Select",
+                        ExpressionToSexpr(expr'),
+                        NameToSexpr(field),
+                        Std.Strings.OfBool(isConstant),
+                        Std.Strings.OfBool(onDatatype),
+                        TypeToSexpr(fieldType)])
+    case SelectFn(expr', field, onDatatype, isStatic, arity) =>
+      StringSeqToSexpr(["Expression.SelectFn",
+                        ExpressionToSexpr(expr'),
+                        NameToSexpr(field),
+                        Std.Strings.OfBool(onDatatype),
+                        Std.Strings.OfBool(isStatic),
+                        Std.Strings.OfNat(arity)])
+    case Index(expr', collKind, indices) =>
+      StringSeqToSexpr(["Expression.Index",
+                        ExpressionToSexpr(expr'),
+                        CollKindToSexpr(collKind),
+                        MapJoinExpressionToSexpr(indices)])
     case IndexRange(expr', isArray, low, high) =>
       StringSeqToSexpr(["Expression.IndexRange",
-                          ExpressionToSexpr(expr'),
-                          Std.Strings.OfBool(isArray),
-                          //assert forall x :: low == Std.Wrappers.Some(x) ==> x < expr;
-                          OptionToSexpr(low, (x) requires x < expr=> ExpressionToSexpr(x))])
-    case TupleSelect(expr', index, fieldType) => "TODO"
-    case Call(on, callName, typeArgs, args) => "TODO"
-    case Lambda(params, retType, body) => "TODO"
+                        ExpressionToSexpr(expr'),
+                        Std.Strings.OfBool(isArray),
+                        OptionToSexpr(low,
+                                      (x) requires x < expr =>
+                                        ExpressionToSexpr(x)),
+                        OptionToSexpr(high,
+                                      (x) requires x < expr =>
+                                        ExpressionToSexpr(x))])
+    case TupleSelect(expr', index, fieldType) =>
+      StringSeqToSexpr(["Expression.TupleSelect",
+                        ExpressionToSexpr(expr'),
+                        Std.Strings.OfNat(index),
+                        TypeToSexpr(fieldType)])
+    case Call(on, callName, typeArgs, args) =>
+      StringSeqToSexpr(["Expression.Call",
+                        ExpressionToSexpr(on),
+                        CallNameToSexpr(callName),
+                        MapJoin(TypeToSexpr, typeArgs),
+                        MapJoinExpressionToSexpr(args)])
+    case Lambda(params, retType, body) =>
+      StringSeqToSexpr(["Expression.Lambda",
+                        MapJoin(FormalToSexpr, params),
+                        TypeToSexpr(retType),
+                        MapJoin(StatementToSexpr, body)])
     case BetaRedex(values, retType, expr') =>
       StringSeqToSexpr(["Expression.BetaRedex",
-                          assert forall x :: x in values ==> x.1 < expr;
-                          MapJoin(x requires x in values =>
+                        assert forall x :: x in values ==> x.1 < expr;
+                        MapJoin(x requires x in values =>
                                   TwoTupleToSexpr(x,
                                                   FormalToSexpr,
                                                   (z) requires z < expr =>
                                                     ExpressionToSexpr(z)),
-                                                  values),
-                          TypeToSexpr(retType),
-                          ExpressionToSexpr(expr')])
-    case IIFE(name, typ, value, iifeBody) => "TODO"
-    case Apply(expr', args) => "TODO"
-    case TypeTest(on, dType, variant) => "TODO"
-    case InitializationValue(typ) => "TODO"
-    case BoolBoundedPool() => "TODO"
-    case SetBoundedPool(of) => "TODO"
-    case SeqBoundedPool(of, includeDuplicates) => "TODO"
-    case IntRange(lo, hi) => "TODO"
+                                values),
+                        TypeToSexpr(retType),
+                        ExpressionToSexpr(expr')])
+    case IIFE(name, typ, value, iifeBody) =>
+      StringSeqToSexpr(["Expression.IIFE",
+                        IdentToSexpr(name),
+                        TypeToSexpr(typ),
+                        ExpressionToSexpr(value),
+                        ExpressionToSexpr(iifeBody)])
+    case Apply(expr', args) =>
+      StringSeqToSexpr(["Expression.Apply",
+                        ExpressionToSexpr(expr'),
+                        MapJoinExpressionToSexpr(args)])
+    case TypeTest(on, dType, variant) =>
+      StringSeqToSexpr(["Expression.TypeTest",
+                        ExpressionToSexpr(on),
+                        MapJoin(IdentToSexpr, dType),
+                        NameToSexpr(variant)])
+    case InitializationValue(typ) =>
+      StringSeqToSexpr(["Expression.InitializationValue",
+                        TypeToSexpr(typ)])
+    case BoolBoundedPool() =>
+      StringSeqToSexpr(["Expression.BoolBoundedPool"])
+    case SetBoundedPool(of) =>
+      StringSeqToSexpr(["Expression.SetBoundedPool",
+                        ExpressionToSexpr(of)])
+    case SeqBoundedPool(of, includeDuplicates) =>
+      StringSeqToSexpr(["Expression.SeqBoundedPool",
+                        ExpressionToSexpr(of),
+                        Std.Strings.OfBool(includeDuplicates)])
+    case IntRange(lo, hi) =>
+      StringSeqToSexpr(["Expression.IntRange",
+                        ExpressionToSexpr(lo),
+                        ExpressionToSexpr(hi)])
   }
 
-  // analogously to TypeToSexpr case
+  // analogous to TypeToSexpr case
   function MapJoinExpressionToSexpr(ts: seq<DAST.Expression>): string
   {
     MapJoin((x) requires x in ts => (ExpressionToSexpr(x)), ts)
@@ -352,6 +437,22 @@ module {:extern} DafnyToSExpressionCompiler {
 
   function DatatypeTypeToSexpr(datatypeType: DAST.DatatypeType): string {
     "DatatypeTypeToSexpr: TODO"
+  }
+
+  function UnaryOpToSexpr(unOp: DAST.UnaryOp): string {
+    "UnaryOpToSexpr: TODO"
+  }
+
+  function BinOpToSexpr(op: DAST.BinOp): string {
+    "BinOpToSexpr: TODO"
+  }
+
+  function CollKindToSexpr(collKind: DAST.CollKind): string {
+    "CollKindToSexpr: TODO"
+  }
+
+  function CallNameToSexpr(callName: DAST.CallName): string {
+    "CallNameToSexpr: TODO"
   }
 
   function OptionToSexpr<T>(opt: Std.Wrappers.Option<T>, f: (T ~> string)): string
