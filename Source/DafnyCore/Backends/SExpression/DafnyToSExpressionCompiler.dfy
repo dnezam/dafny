@@ -14,11 +14,13 @@ module {:extern} DafnyToSExpressionCompiler {
     s := StringSeqToSexpr(["Program", MapJoin(ModuleToSexpr, p)]);
   }
 
-  function ModuleToSexpr(mod: Module): string {
+  function ModuleToSexpr(mod: Module): string
+    decreases mod, 1
+  {
     StringSeqToSexpr(["Module",
                         NameToSexpr(mod.name),
                         MapJoin(AttributeToSexpr, mod.attributes),
-                        OptionToSexpr(mod.body, x => MapJoin(ModuleItemToSexpr, x))])
+                        OptionToSexpr(mod.body, x => MapJoin(i => ModuleItemToSexpr(mod, i), x))])
   }
 
   function NameToSexpr(name: Name): string {
@@ -35,9 +37,11 @@ module {:extern} DafnyToSExpressionCompiler {
     case Some(value) => StringSeqToSexpr(["Some", convert(value)])
   }
 
-  function ModuleItemToSexpr(modItem: ModuleItem): string {
+  function ModuleItemToSexpr(ghost parent: Module, modItem: ModuleItem): string
+    decreases parent, 0
+  {
     match modItem
-    case Module(mod) => ModuleToSexpr(mod)
+    case Module(mod) => assume {:axiom} mod < parent; ModuleToSexpr(mod)
     case Class(cls) => ClassToSexpr(cls) 
     case Trait(trt) => TraitToSexpr(trt)
     case Newtype(nt) => NewtypeToSexpr(nt)
