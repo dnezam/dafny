@@ -226,11 +226,25 @@ module {:extern} DafnyToSExpressionCompiler {
                                                   (z) requires z < expr =>
                                                     ExpressionToSexpr(z)),
                                                   contents)])
-    case Convert(value, from, typ) => "TODO"
-    case SeqConstruct(length, elem) => "TODO"
-    case SeqValue(elements, typ) => "TODO"
-    case SetValue(elements) => "TODO"
-    case MultisetValue(elements) => "TODO"
+    case Convert(value, from, typ) =>
+      StringSeqToSexpr(["Expression.Convert",
+                          ExpressionToSexpr(value),
+                          TypeToSexpr(from),
+                          TypeToSexpr(typ)])
+    case SeqConstruct(length, elem) =>
+      StringSeqToSexpr(["Expression.SeqConstruct",
+                          ExpressionToSexpr(length),
+                          ExpressionToSexpr(elem)])
+    case SeqValue(elements, typ) =>
+      StringSeqToSexpr(["Expression.SeqValue",
+                          MapJoinExpressionToSexpr(elements),
+                          TypeToSexpr(typ)])
+    case SetValue(elements) =>
+      StringSeqToSexpr(["Expression.SetValue",
+                          MapJoinExpressionToSexpr(elements)])
+    case MultisetValue(elements) =>
+      StringSeqToSexpr(["Expression.MultisetValue",
+                          MapJoinExpressionToSexpr(elements)])
     case MapValue(mapElems) =>
       StringSeqToSexpr(["Expression.MapValue",
                           assert forall x :: x in mapElems ==> (x.0 < expr && x.1 < expr);
@@ -241,36 +255,50 @@ module {:extern} DafnyToSExpressionCompiler {
                                                   (z) requires z < expr =>
                                                     ExpressionToSexpr(z)),
                                                   mapElems)])
-    case MapBuilder(keyType, valueType) => "TODO"
-    case SeqUpdate(expr, indexExpr, value) => "TODO"
-    case MapUpdate(expr, indexExpr, value) => "TODO"
+    case MapBuilder(keyType, valueType) =>
+      StringSeqToSexpr(["Expression.MapBuilder",
+                          TypeToSexpr(keyType),
+                          TypeToSexpr(valueType)])
+    case SeqUpdate(expr', indexExpr, value) =>
+      StringSeqToSexpr(["Expression.SeqUpdate",
+                          ExpressionToSexpr(expr'),
+                          ExpressionToSexpr(indexExpr),
+                          ExpressionToSexpr(value)])
+    case MapUpdate(expr', indexExpr, value) => "TODO"
     case SetBuilder(elemType) => "TODO"
-    case ToMultiset(expr) => "TODO"
+    case ToMultiset(expr') => "TODO"
     case This() => "TODO"
     case Ite(cond, thn, els) => "TODO"
-    case UnOp(unOp, expr, format1) => "TODO"
+    case UnOp(unOp, expr', format1) => "TODO"
     case BinOp(op, left, right, format2) => "TODO"
-    case ArrayLen(expr, dim) => "TODO"
-    case MapKeys(expr) => "TODO"
-    case MapValues(expr) => "TODO"
-    case Select(expr, field, isConstant, onDatatype, fieldType) => "TODO"
-    case SelectFn(expr, field, onDatatype, isStatic, arity) => "TODO"
-    case Index(expr, collKind, indices) => "TODO"
-    case IndexRange(expr, isArray, low, high) => "TODO"
-    case TupleSelect(expr, index, fieldType) => "TODO"
+    case ArrayLen(expr', dim) => "TODO"
+    case MapKeys(expr') => "TODO"
+    case MapValues(expr') => "TODO"
+    case Select(expr', field, isConstant, onDatatype, fieldType) => "TODO"
+    case SelectFn(expr', field, onDatatype, isStatic, arity) => "TODO"
+    case Index(expr', collKind, indices) => "TODO"
+    case IndexRange(expr', isArray, low, high) =>
+      StringSeqToSexpr(["Expression.IndexRange",
+                          ExpressionToSexpr(expr'),
+                          Std.Strings.OfBool(isArray),
+                          //assert forall x :: low == Std.Wrappers.Some(x) ==> x < expr;
+                          OptionToSexpr(low, (x) requires x < expr=> ExpressionToSexpr(x))])
+    case TupleSelect(expr', index, fieldType) => "TODO"
     case Call(on, callName, typeArgs, args) => "TODO"
     case Lambda(params, retType, body) => "TODO"
-    case BetaRedex(values, retType, expr) =>
+    case BetaRedex(values, retType, expr') =>
       StringSeqToSexpr(["Expression.BetaRedex",
-  assert forall x: (DAST.Formal, DAST.Expression) {:trigger x.1} {:trigger x in values} :: x in values ==> x.1 < expr;
+                          assert forall x :: x in values ==> x.1 < expr;
                           MapJoin(x requires x in values =>
                                   TwoTupleToSexpr(x,
                                                   FormalToSexpr,
                                                   (z) requires z < expr =>
                                                     ExpressionToSexpr(z)),
-                                                  values)])
+                                                  values),
+                          TypeToSexpr(retType),
+                          ExpressionToSexpr(expr')])
     case IIFE(name, typ, value, iifeBody) => "TODO"
-    case Apply(expr, args) => "TODO"
+    case Apply(expr', args) => "TODO"
     case TypeTest(on, dType, variant) => "TODO"
     case InitializationValue(typ) => "TODO"
     case BoolBoundedPool() => "TODO"
@@ -326,11 +354,13 @@ module {:extern} DafnyToSExpressionCompiler {
     "DatatypeTypeToSexpr: TODO"
   }
 
-  // Using -> is easier than ~>
-  function OptionToSexpr<T>(opt: Std.Wrappers.Option<T>, convert: (T -> string)): string {
+  function OptionToSexpr<T>(opt: Std.Wrappers.Option<T>, f: (T ~> string)): string
+    requires opt.Some? ==> f.requires(opt.Extract())
+    reads set o | opt.Some? && o in f.reads(opt.Extract()) :: o
+  {
     match opt
     case None => "(None)"
-    case Some(value) => StringSeqToSexpr(["Some", convert(value)])
+    case Some(value) => StringSeqToSexpr(["Some", f(value)])
   }
 
   function MapJoin<T>(f: (T ~> string), xs: seq<T>): string
