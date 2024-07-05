@@ -220,13 +220,27 @@ module {:extern} DafnyToSExpressionCompiler {
                           NameToSexpr(variant),
                           Std.Strings.OfBool(isCo),
                           assert forall x :: x in contents ==> x.1 < expr;
-                          MapJoin(x requires x in contents => TwoTupleToSexpr(x, y => y, (z) requires z < expr => ExpressionToSexpr(z)), contents)])
+                          MapJoin(x requires x in contents =>
+                                  TwoTupleToSexpr(x,
+                                                  y => y,
+                                                  (z) requires z < expr =>
+                                                    ExpressionToSexpr(z)),
+                                                  contents)])
     case Convert(value, from, typ) => "TODO"
     case SeqConstruct(length, elem) => "TODO"
     case SeqValue(elements, typ) => "TODO"
     case SetValue(elements) => "TODO"
     case MultisetValue(elements) => "TODO"
-    case MapValue(mapElems) => "TODO"
+    case MapValue(mapElems) =>
+      StringSeqToSexpr(["Expression.MapValue",
+                          assert forall x :: x in mapElems ==> (x.0 < expr && x.1 < expr);
+                          MapJoin(x requires x in mapElems =>
+                                  TwoTupleToSexpr(x,
+                                                  (y) requires y < expr =>
+                                                    ExpressionToSexpr(y),
+                                                  (z) requires z < expr =>
+                                                    ExpressionToSexpr(z)),
+                                                  mapElems)])
     case MapBuilder(keyType, valueType) => "TODO"
     case SeqUpdate(expr, indexExpr, value) => "TODO"
     case MapUpdate(expr, indexExpr, value) => "TODO"
@@ -246,7 +260,15 @@ module {:extern} DafnyToSExpressionCompiler {
     case TupleSelect(expr, index, fieldType) => "TODO"
     case Call(on, callName, typeArgs, args) => "TODO"
     case Lambda(params, retType, body) => "TODO"
-    case BetaRedex(values, retType, expr) => "TODO"
+    case BetaRedex(values, retType, expr) =>
+      StringSeqToSexpr(["Expression.BetaRedex",
+  assert forall x: (DAST.Formal, DAST.Expression) {:trigger x.1} {:trigger x in values} :: x in values ==> x.1 < expr;
+                          MapJoin(x requires x in values =>
+                                  TwoTupleToSexpr(x,
+                                                  FormalToSexpr,
+                                                  (z) requires z < expr =>
+                                                    ExpressionToSexpr(z)),
+                                                  values)])
     case IIFE(name, typ, value, iifeBody) => "TODO"
     case Apply(expr, args) => "TODO"
     case TypeTest(on, dType, variant) => "TODO"
