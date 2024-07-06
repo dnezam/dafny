@@ -17,18 +17,29 @@ module {:extern} DafnyToSExpressionCompiler {
   function ModuleToSexpr(mod: DAST.Module): string
     decreases mod, 1
   {
-    StringSeqToSexpr(["Module.Module",
-                      NameToSexpr(mod.name),
-                      MapJoin(AttributeToSexpr, mod.attributes),
-                      OptionToSexpr(mod.body, x => MapJoin(i => ModuleItemToSexpr(mod, i), x))])
+    // TODO: Figure out why this fails
+    //assert forall x :: (mod.body.Some? && x in mod.body.Extract() && x.Module?) ==> x.mod < mod;
+    match mod
+    case Module(name, attributes, body) =>
+      StringSeqToSexpr(["Module.Module",
+                        NameToSexpr(name),
+                        MapJoin(AttributeToSexpr, attributes),
+                        OptionToSexpr(body, x => MapJoin(i => ModuleItemToSexpr(mod, i), x))])
   }
 
   function NameToSexpr(name: DAST.Name): string {
-    StringSeqToSexpr(["Name.Name", name.dafny_name])
+    match name
+    case Name(dafny_name) =>
+      StringSeqToSexpr(["Name.Name",
+                        dafny_name])
   }
 
   function AttributeToSexpr(attribute: DAST.Attribute): string {
-    StringSeqToSexpr(["Attribute.Attribute", attribute.name, StringSeqToSexpr(attribute.args)])
+    match attribute
+    case Attribute(name, args) =>
+      StringSeqToSexpr(["Attribute.Attribute",
+                        name,
+                        StringSeqToSexpr(args)])
   }
 
   function ModuleItemToSexpr(ghost parent: DAST.Module, modItem: DAST.ModuleItem): string
@@ -46,59 +57,70 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function ClassToSexpr(cls: DAST.Class): string {
-    StringSeqToSexpr(["Class.Class",
-                      NameToSexpr(cls.name),
-                      IdentToSexpr(cls.enclosingModule),
-                      MapJoin(TypeArgDeclToSexpr, cls.typeParams),
-                      MapJoin(TypeToSexpr, cls.superClasses),
-                      MapJoin(FieldToSexpr, cls.fields),
-                      MapJoin(ClassItemToSexpr, cls.body),
-                      MapJoin(AttributeToSexpr, cls.attributes)])
+    match cls
+    case Class(name, enclosingModule, typeParams, superClasses, fields, body, attributes) =>
+      StringSeqToSexpr(["Class.Class",
+                        NameToSexpr(name),
+                        IdentToSexpr(enclosingModule),
+                        MapJoin(TypeArgDeclToSexpr, typeParams),
+                        MapJoin(TypeToSexpr, superClasses),
+                        MapJoin(FieldToSexpr, fields),
+                        MapJoin(ClassItemToSexpr, body),
+                        MapJoin(AttributeToSexpr, attributes)])
   }
 
   function TraitToSexpr(trt: DAST.Trait): string {
-    StringSeqToSexpr(["Trait.Trait",
-                      NameToSexpr(trt.name),
-                      MapJoin(TypeArgDeclToSexpr, trt.typeParams),
-                      MapJoin(ClassItemToSexpr, trt.body),
-                      MapJoin(AttributeToSexpr, trt.attributes)])
+    match trt
+    case Trait(name, typeParams, body, attributes) =>
+      StringSeqToSexpr(["Trait.Trait",
+                        NameToSexpr(name),
+                        MapJoin(TypeArgDeclToSexpr, typeParams),
+                        MapJoin(ClassItemToSexpr, body),
+                        MapJoin(AttributeToSexpr, attributes)])
   }
 
   function NewtypeToSexpr(nt: DAST.Newtype): string {
-    StringSeqToSexpr(["Newtype.Newtype",
-                      NameToSexpr(nt.name),
-                      MapJoin(TypeArgDeclToSexpr, nt.typeParams),
-                      TypeToSexpr(nt.base),
-                      NewtypeRangeToSexpr(nt.range),
-                      MapJoin(StatementToSexpr, nt.witnessStmts),
-                      OptionToSexpr(nt.witnessExpr, ExpressionToSexpr),
-                      MapJoin(AttributeToSexpr, nt.attributes)])
+    match nt
+    case Newtype(name, typeParams, base, range, witnessStmts, witnessExpr, attributes) =>
+      StringSeqToSexpr(["Newtype.Newtype",
+                        NameToSexpr(name),
+                        MapJoin(TypeArgDeclToSexpr, typeParams),
+                        TypeToSexpr(base),
+                        NewtypeRangeToSexpr(range),
+                        MapJoin(StatementToSexpr, witnessStmts),
+                        OptionToSexpr(witnessExpr, ExpressionToSexpr),
+                        MapJoin(AttributeToSexpr, attributes)])
   }
 
   function DatatypeToSexpr(dt: DAST.Datatype): string {
-    StringSeqToSexpr(["Datatype.Datatype",
-                      NameToSexpr(dt.name),
-                      IdentToSexpr(dt.enclosingModule),
-                      MapJoin(TypeArgDeclToSexpr, dt.typeParams),
-                      MapJoin(DatatypeCtorToSexpr, dt.ctors),
-                      MapJoin(ClassItemToSexpr, dt.body),
-                      Std.Strings.OfBool(dt.isCo),
-                      MapJoin(AttributeToSexpr, dt.attributes)])
+    match dt
+    case Datatype(name, enclosingModule, typeParams, ctors, body, isCo, attributes) =>
+      StringSeqToSexpr(["Datatype.Datatype",
+                        NameToSexpr(name),
+                        IdentToSexpr(enclosingModule),
+                        MapJoin(TypeArgDeclToSexpr, typeParams),
+                        MapJoin(DatatypeCtorToSexpr, ctors),
+                        MapJoin(ClassItemToSexpr, body),
+                        Std.Strings.OfBool(isCo),
+                        MapJoin(AttributeToSexpr, attributes)])
   }
 
   function IdentToSexpr(ident: DAST.Ident): string {
-    StringSeqToSexpr(["Ident.Ident",
-                      NameToSexpr(ident.id)])
+    match ident
+    case Ident(id) =>
+      StringSeqToSexpr(["Ident.Ident",
+                        NameToSexpr(id)])
   }
 
   function TypeArgDeclToSexpr(typeArgDecl: DAST.TypeArgDecl): string {
-    StringSeqToSexpr(["TypeArgDecl.TypeArgDecl",
-                      IdentToSexpr(typeArgDecl.name),
-                      MapJoin(TypeArgBoundToSexpr, typeArgDecl.bounds)])
+    match typeArgDecl
+    case TypeArgDecl(name, bounds) =>
+      StringSeqToSexpr(["TypeArgDecl.TypeArgDecl",
+                        IdentToSexpr(name),
+                        MapJoin(TypeArgBoundToSexpr, bounds)])
   }
 
-  function TypeToSexpr(t: DAST.Type): string
-  {
+  function TypeToSexpr(t: DAST.Type): string {
     match t
     case Path(ids, typeArgs, resolved) =>
       StringSeqToSexpr(["Type.Path",
@@ -151,20 +173,20 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   // eta-expansion required; cannot be made generic
-  function MapJoinTypeToSexpr(ts: seq<DAST.Type>): string
-  {
+  function MapJoinTypeToSexpr(ts: seq<DAST.Type>): string {
     // need precondition to prove termination in TypeToSexpr
     MapJoin((x) requires x in ts => (TypeToSexpr(x)), ts)
   }
 
   function FieldToSexpr(field: DAST.Field): string {
-    StringSeqToSexpr(["Field.Field",
-                      FormalToSexpr(field.formal),
-                      OptionToSexpr(field.defaultValue, ExpressionToSexpr)])
+    match field
+    case Field(formal, defaultValue) =>
+      StringSeqToSexpr(["Field.Field",
+                        FormalToSexpr(formal),
+                        OptionToSexpr(defaultValue, ExpressionToSexpr)])
   }
 
   function ClassItemToSexpr(classItem: DAST.ClassItem): string {
-    // Need to use match here since classItem.m is not defined
     match classItem
     case Method(m) =>
       StringSeqToSexpr(["ClassItem.Method",
@@ -187,8 +209,7 @@ module {:extern} DafnyToSExpressionCompiler {
     case NoRange => StringSeqToSexpr(["NewtypeRange.NoRange"])
   }
 
-  function ExpressionToSexpr(expr: DAST.Expression): string
-  {
+  function ExpressionToSexpr(expr: DAST.Expression): string {
     match expr
     case Literal(literal) =>
       StringSeqToSexpr(["Expression.Literal",
@@ -280,13 +301,11 @@ module {:extern} DafnyToSExpressionCompiler {
                         ExpressionToSexpr(cond),
                         ExpressionToSexpr(thn),
                         ExpressionToSexpr(els)])
-    // Ignore formatting
-    case UnOp(unOp, expr', _) =>
+    case UnOp(unOp, expr', _) =>  // Ignore formatting
       StringSeqToSexpr(["Expression.UnOp",
                         UnaryOpToSexpr(unOp),
                         ExpressionToSexpr(expr')])
-    // Ignore formatting
-    case BinOp(op, left, right, _) =>
+    case BinOp(op, left, right, _) =>  // Ignore formatting
       StringSeqToSexpr(["Expression.BinOp",
                         BinOpToSexpr(op),
                         ExpressionToSexpr(left),
@@ -391,13 +410,11 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   // analogous to TypeToSexpr case
-  function MapJoinExpressionToSexpr(ts: seq<DAST.Expression>): string
-  {
+  function MapJoinExpressionToSexpr(ts: seq<DAST.Expression>): string {
     MapJoin((x) requires x in ts => (ExpressionToSexpr(x)), ts)
   }
 
-  function StatementToSexpr(stmt: DAST.Statement): string
-  {
+  function StatementToSexpr(stmt: DAST.Statement): string {
     match stmt
     case DeclareVar(name, typ, maybeValue) =>
       StringSeqToSexpr(["Statement.DeclareVar",
@@ -458,30 +475,34 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   // analogous to TypeToSexpr case
-  function MapJoinStatementToSexpr(ts: seq<DAST.Statement>): string
-  {
+  function MapJoinStatementToSexpr(ts: seq<DAST.Statement>): string {
     MapJoin((x) requires x in ts => (StatementToSexpr(x)), ts)
   }
 
   function DatatypeCtorToSexpr(datatypeCtor: DAST.DatatypeCtor): string {
-    StringSeqToSexpr(["DatatypeDtor.DatatypeDtor",
-                      NameToSexpr(datatypeCtor.name),
-                      MapJoin(DatatypeDtorToSexpr, datatypeCtor.args),
-                      Std.Strings.OfBool(datatypeCtor.hasAnyArgs)])
+    match datatypeCtor
+    case DatatypeCtor(name, args, hasAnyArgs) =>
+      StringSeqToSexpr(["DatatypeCtor.DatatypeCtor",
+                        NameToSexpr(name),
+                        MapJoin(DatatypeDtorToSexpr, args),
+                        Std.Strings.OfBool(hasAnyArgs)])
   }
 
   function TypeArgBoundToSexpr(typeArgBound: DAST.TypeArgBound): string {
     match typeArgBound
-    case SupportsEquality => StringSeqToSexpr(["TypeArgBound.SupportsEquality"])
-    case SupportsDefault => StringSeqToSexpr(["TypeArgBound.SupportsDefault"])
+    case SupportsEquality =>
+      StringSeqToSexpr(["TypeArgBound.SupportsEquality"])
+    case SupportsDefault =>
+      StringSeqToSexpr(["TypeArgBound.SupportsDefault"])
   }
 
-  // TODO? Implement these kinds of functions using match to avoid missing parts
   function FormalToSexpr(formal: DAST.Formal): string {
-    StringSeqToSexpr(["Formal.Formal",
-                      NameToSexpr(formal.name),
-                      TypeToSexpr(formal.typ),
-                      MapJoin(AttributeToSexpr, formal.attributes)])
+    match formal
+    case Formal(name, typ, attributes) =>
+      StringSeqToSexpr(["Formal.Formal",
+                        NameToSexpr(name),
+                        TypeToSexpr(typ),
+                        MapJoin(AttributeToSexpr, attributes)])
   }
 
   function ResolvedTypeToSexpr(resolvedType: DAST.ResolvedType): string {
@@ -511,18 +532,20 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function MethodToSexpr(m: DAST.Method): string {
-    StringSeqToSexpr(["Method.Method",
-                      Std.Strings.OfBool(m.isStatic),
-                      Std.Strings.OfBool(m.hasBody),
-                      OptionToSexpr(m.overridingPath,
-                                    x => MapJoin(IdentToSexpr, x)),
-                      NameToSexpr(m.name),
-                      MapJoin(TypeArgDeclToSexpr, m.typeParams),
-                      MapJoin(FormalToSexpr, m.params),
-                      MapJoin(StatementToSexpr, m.body),
-                      MapJoin(TypeToSexpr, m.outTypes),
-                      OptionToSexpr(m.outVars,
-                                    x => MapJoin(IdentToSexpr, x))])
+    match m
+    case Method(isStatic, hasBody, overridingPath, name, typeParams, params, body, outTypes, outVars) =>
+      StringSeqToSexpr(["Method.Method",
+                        Std.Strings.OfBool(isStatic),
+                        Std.Strings.OfBool(hasBody),
+                        OptionToSexpr(overridingPath,
+                                      x => MapJoin(IdentToSexpr, x)),
+                        NameToSexpr(name),
+                        MapJoin(TypeArgDeclToSexpr, typeParams),
+                        MapJoin(FormalToSexpr, params),
+                        MapJoin(StatementToSexpr, body),
+                        MapJoin(TypeToSexpr, outTypes),
+                        OptionToSexpr(outVars,
+                                      x => MapJoin(IdentToSexpr, x))])
   }
 
   function LiteralToSexpr(literal: DAST.Literal): string {
@@ -555,9 +578,11 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function DatatypeTypeToSexpr(datatypeType: DAST.DatatypeType): string {
-    StringSeqToSexpr(["DatatypeType.DatatypeType",
-                      MapJoin(IdentToSexpr, datatypeType.path),
-                      MapJoin(AttributeToSexpr, datatypeType.attributes)])
+    match datatypeType
+    case DatatypeType(path, attributes) =>
+      StringSeqToSexpr(["DatatypeType.DatatypeType",
+                        MapJoin(IdentToSexpr, path),
+                        MapJoin(AttributeToSexpr, attributes)])
   }
 
   function UnaryOpToSexpr(unOp: DAST.UnaryOp): string {
@@ -682,14 +707,18 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function DatatypeDtorToSexpr(datatypeDtor: DAST.DatatypeDtor): string {
-    StringSeqToSexpr(["DatatypeDtor.DatatypeDtor",
-                      FormalToSexpr(datatypeDtor.formal),
-                      OptionToSexpr(datatypeDtor.callName, x => x)])
+    match datatypeDtor
+    case DatatypeDtor(formal, callName) =>
+      StringSeqToSexpr(["DatatypeDtor.DatatypeDtor",
+                        FormalToSexpr(formal),
+                        OptionToSexpr(callName, x => x)])
   }
 
   function CallSignatureToSexpr(signature: DAST.CallSignature): string {
-    StringSeqToSexpr(["CallSignature.CallSignature",
-                      MapJoin(FormalToSexpr, signature.parameters)])
+    match signature
+    case CallSignature(parameters) =>
+      StringSeqToSexpr(["CallSignature.CallSignature",
+                        MapJoin(FormalToSexpr, parameters)])
   }
 
   function OptionToSexpr<T>(opt: Std.Wrappers.Option<T>, f: (T ~> string)): string
