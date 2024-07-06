@@ -347,7 +347,7 @@ module {:extern} DafnyToSExpressionCompiler {
       StringSeqToSexpr(["Expression.Lambda",
                         MapJoin(FormalToSexpr, params),
                         TypeToSexpr(retType),
-                        MapJoin(StatementToSexpr, body)])
+                        MapJoinStatementToSexpr(body)])
     case BetaRedex(values, retType, expr') =>
       StringSeqToSexpr(["Expression.BetaRedex",
                         assert forall x :: x in values ==> x.1 < expr;
@@ -398,8 +398,46 @@ module {:extern} DafnyToSExpressionCompiler {
     MapJoin((x) requires x in ts => (ExpressionToSexpr(x)), ts)
   }
 
-  function StatementToSexpr(stmt: DAST.Statement): string {
-    "StatementToSexpr: TODO"
+  function StatementToSexpr(stmt: DAST.Statement): string
+    decreases stmt
+  {
+    match stmt
+    case DeclareVar(name, typ, maybeValue) =>
+      StringSeqToSexpr(["Statement.DeclareVar",
+                        NameToSexpr(name),
+                        TypeToSexpr(typ),
+                        OptionToSexpr(maybeValue,
+                                      (x) requires maybeValue.Some?
+                                          requires maybeValue.Extract() == x =>
+                                            ExpressionToSexpr(x))])
+    case Assign(lhs, value)  =>
+      StringSeqToSexpr(["Statement.Assign",
+                        AssignLhsToSexpr(lhs),
+                        ExpressionToSexpr(value)])
+    case If(cond, thn, els)  => "TODO"
+    case Labeled(lbl, body)  => "TODO"
+    case While(cond, body)  => "TODO"
+    case Foreach(boundName, boundType, over, body) => "TODO"
+    case Call(on, callName, typeArgs, args, outs) =>
+      StringSeqToSexpr(["Statement.Call",
+                        ExpressionToSexpr(on),
+                        CallNameToSexpr(callName),
+                        MapJoin(TypeToSexpr, typeArgs),
+                        MapJoinExpressionToSexpr(args),
+                        OptionToSexpr(outs, x => MapJoin(IdentToSexpr, x))])
+    case Return(expr) => "TODO"
+    case EarlyReturn() => "TODO"
+    case Break(toLabel) => "TODO"
+    case TailRecursive(body) => "TODO"
+    case JumpTailCallStart() => "TODO"
+    case Halt() => "TODO"
+    case Print(expr) => "TODO"
+  }
+
+  // analogous to TypeToSexpr case
+  function MapJoinStatementToSexpr(ts: seq<DAST.Statement>): string
+  {
+    MapJoin((x) requires x in ts => (StatementToSexpr(x)), ts)
   }
 
   function DatatypeCtorToSexpr(datatypeCtor: DAST.DatatypeCtor): string {
@@ -455,6 +493,10 @@ module {:extern} DafnyToSExpressionCompiler {
     "CallNameToSexpr: TODO"
   }
 
+  function AssignLhsToSexpr(lhs: DAST.AssignLhs): string {
+    "AssignLhsToSexpr: TODO"
+  }
+
   function OptionToSexpr<T>(opt: Std.Wrappers.Option<T>, f: (T ~> string)): string
     requires opt.Some? ==> f.requires(opt.Extract())
     reads set o | opt.Some? && o in f.reads(opt.Extract()) :: o
@@ -484,5 +526,4 @@ module {:extern} DafnyToSExpressionCompiler {
   {
     StringSeqToSexpr([Tf(tuple.0), Uf(tuple.1)])
   }
-
 }
