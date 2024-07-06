@@ -98,7 +98,6 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function TypeToSexpr(t: DAST.Type): string
-    decreases t
   {
     match t
     case Path(ids, typeArgs, resolved) =>
@@ -189,7 +188,6 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function ExpressionToSexpr(expr: DAST.Expression): string
-    decreases expr
   {
     match expr
     case Literal(literal) =>
@@ -399,7 +397,6 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function StatementToSexpr(stmt: DAST.Statement): string
-    decreases stmt
   {
     match stmt
     case DeclareVar(name, typ, maybeValue) =>
@@ -650,19 +647,49 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function CollKindToSexpr(collKind: DAST.CollKind): string {
-    "CollKindToSexpr: TODO"
+    match collKind
+    case Seq => StringSeqToSexpr(["CollKind.Seq"])
+    case Array => StringSeqToSexpr(["CollKind.Array"])
+    case Map => StringSeqToSexpr(["CollKind.Map"])
   }
 
   function CallNameToSexpr(callName: DAST.CallName): string {
-    "CallNameToSexpr: TODO"
+    match callName
+    case CallName(name, onType, signature) =>
+      StringSeqToSexpr(["CallName.CallName",
+                        NameToSexpr(name),
+                        OptionToSexpr(onType, TypeToSexpr),
+                        CallSignatureToSexpr(signature)])
+    case MapBuilderAdd => StringSeqToSexpr(["CallName.MapBuilderAdd"])
+    case MapBuilderBuild => StringSeqToSexpr(["CallName.MapBuilderBuild"])
+    case SetBuilderAdd => StringSeqToSexpr(["CallName.SetBuilderAdd"])
+    case SetBuilderBuild => StringSeqToSexpr(["CallName.SetBuilderBuild"])
   }
 
   function AssignLhsToSexpr(lhs: DAST.AssignLhs): string {
-    "AssignLhsToSexpr: TODO"
+    match lhs
+    case Ident(ident) =>
+      StringSeqToSexpr(["AssignLhs.Ident",
+                        IdentToSexpr(ident)])
+    case Select(expr, field) =>
+      StringSeqToSexpr(["AssignLhs.Select",
+                        ExpressionToSexpr(expr),
+                        NameToSexpr(field)])
+    case Index(expr, indices) =>
+      StringSeqToSexpr(["AssignLhs.Index",
+                        ExpressionToSexpr(expr),
+                        MapJoinExpressionToSexpr(indices)])
   }
 
   function DatatypeDtorToSexpr(datatypeDtor: DAST.DatatypeDtor): string {
-    "DatatypeDtorToSexpr: TODO"
+    StringSeqToSexpr(["DatatypeDtor.DatatypeDtor",
+                      FormalToSexpr(datatypeDtor.formal),
+                      OptionToSexpr(datatypeDtor.callName, x => x)])
+  }
+
+  function CallSignatureToSexpr(signature: DAST.CallSignature): string {
+    StringSeqToSexpr(["CallSignature.CallSignature",
+                      MapJoin(FormalToSexpr, signature.parameters)])
   }
 
   function OptionToSexpr<T>(opt: Std.Wrappers.Option<T>, f: (T ~> string)): string
