@@ -409,15 +409,30 @@ module {:extern} DafnyToSExpressionCompiler {
                         OptionToSexpr(maybeValue,
                                       (x) requires maybeValue.Some?
                                           requires maybeValue.Extract() == x =>
-                                            ExpressionToSexpr(x))])
+                                        ExpressionToSexpr(x))])
     case Assign(lhs, value)  =>
       StringSeqToSexpr(["Statement.Assign",
                         AssignLhsToSexpr(lhs),
                         ExpressionToSexpr(value)])
-    case If(cond, thn, els)  => "TODO"
-    case Labeled(lbl, body)  => "TODO"
-    case While(cond, body)  => "TODO"
-    case Foreach(boundName, boundType, over, body) => "TODO"
+    case If(cond, thn, els)  =>
+      StringSeqToSexpr(["Statement.If",
+                        ExpressionToSexpr(cond),
+                        MapJoinStatementToSexpr(thn),
+                        MapJoinStatementToSexpr(els)])
+    case Labeled(lbl, body)  =>
+      StringSeqToSexpr(["Statement.Labeled",
+                        lbl,
+                        MapJoinStatementToSexpr(body)])
+    case While(cond, body)  =>
+      StringSeqToSexpr(["Statement.While",
+                        ExpressionToSexpr(cond),
+                        MapJoinStatementToSexpr(body)])
+    case Foreach(boundName, boundType, over, body) =>
+      StringSeqToSexpr(["Statement.Foreach",
+                        NameToSexpr(boundName),
+                        TypeToSexpr(boundType),
+                        ExpressionToSexpr(over),
+                        MapJoinStatementToSexpr(body)])
     case Call(on, callName, typeArgs, args, outs) =>
       StringSeqToSexpr(["Statement.Call",
                         ExpressionToSexpr(on),
@@ -425,13 +440,24 @@ module {:extern} DafnyToSExpressionCompiler {
                         MapJoin(TypeToSexpr, typeArgs),
                         MapJoinExpressionToSexpr(args),
                         OptionToSexpr(outs, x => MapJoin(IdentToSexpr, x))])
-    case Return(expr) => "TODO"
-    case EarlyReturn() => "TODO"
-    case Break(toLabel) => "TODO"
-    case TailRecursive(body) => "TODO"
-    case JumpTailCallStart() => "TODO"
-    case Halt() => "TODO"
-    case Print(expr) => "TODO"
+    case Return(expr) =>
+      StringSeqToSexpr(["Statement.Return",
+                        ExpressionToSexpr(expr)])
+    case EarlyReturn() =>
+      StringSeqToSexpr(["Statement.EarlyReturn"])
+    case Break(toLabel) =>
+      StringSeqToSexpr(["Statement.Break",
+                        OptionToSexpr(toLabel, x => x)])
+    case TailRecursive(body) =>
+      StringSeqToSexpr(["Statement.TailRecursive",
+                        MapJoinStatementToSexpr(body)])
+    case JumpTailCallStart() =>
+      StringSeqToSexpr(["Statement.JumpTailCallStart"])
+    case Halt() =>
+      StringSeqToSexpr(["Statement.Halt"])
+    case Print(expr) =>
+      StringSeqToSexpr(["Statement.Print",
+                        ExpressionToSexpr(expr)])
   }
 
   // analogous to TypeToSexpr case
