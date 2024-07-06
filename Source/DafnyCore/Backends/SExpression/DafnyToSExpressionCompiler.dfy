@@ -467,48 +467,186 @@ module {:extern} DafnyToSExpressionCompiler {
   }
 
   function DatatypeCtorToSexpr(datatypeCtor: DAST.DatatypeCtor): string {
-    "DatatypeCtorToSexpr: TODO"
+    StringSeqToSexpr(["DatatypeDtor.DatatypeDtor",
+                      NameToSexpr(datatypeCtor.name),
+                      MapJoin(DatatypeDtorToSexpr, datatypeCtor.args),
+                      Std.Strings.OfBool(datatypeCtor.hasAnyArgs)])
   }
 
   function TypeArgBoundToSexpr(typeArgBound: DAST.TypeArgBound): string {
-    "TypeArgBoundToSexpr: TODO"
+    match typeArgBound
+    case SupportsEquality => StringSeqToSexpr(["TypeArgBound.SupportsEquality"])
+    case SupportsDefault => StringSeqToSexpr(["TypeArgBound.SupportsDefault"])
   }
 
+  // TODO? Implement these kinds of functions using match to avoid missing parts
   function FormalToSexpr(formal: DAST.Formal): string {
-    "FormalToSexpr: TODO"
+    StringSeqToSexpr(["Formal.Formal",
+                      NameToSexpr(formal.name),
+                      TypeToSexpr(formal.typ),
+                      MapJoin(AttributeToSexpr, formal.attributes)])
   }
 
   function ResolvedTypeToSexpr(resolvedType: DAST.ResolvedType): string {
     match resolvedType
-    case Datatype(datatypeType) => "ResolvedType.Datatype: TODO"
-    case Trait(path, attributes) => "ResolvedType.Trait: TODO"
+    case Datatype(datatypeType) =>
+      StringSeqToSexpr(["ResolvedType.Datatype",
+                        DatatypeTypeToSexpr(datatypeType)])
+    case Trait(path, attributes) =>
+      StringSeqToSexpr(["ResolvedType.Trait",
+                        MapJoin(IdentToSexpr, path),
+                        MapJoin(AttributeToSexpr, attributes)])
     case Newtype(baseType, range, erase, attributes) =>
-      var mutual_test := TypeToSexpr(baseType);
-      "ResolvedType.Newtype: TODO"
+      StringSeqToSexpr(["ResolvedType.Newtype",
+                        TypeToSexpr(baseType),
+                        NewtypeRangeToSexpr(range),
+                        Std.Strings.OfBool(erase),
+                        MapJoin(AttributeToSexpr, attributes)])
   }
 
   function PrimitiveToSexpr(primitive: DAST.Primitive): string {
-    "PrimitiveToSexpr: TODO"
+    match primitive
+    case Int => StringSeqToSexpr(["Primitive.Int"])
+    case Real => StringSeqToSexpr(["Primitive.Real"])
+    case String => StringSeqToSexpr(["Primitive.String"])
+    case Bool => StringSeqToSexpr(["Primitive.Bool"])
+    case Char => StringSeqToSexpr(["Primitive.Char"])
   }
 
   function MethodToSexpr(m: DAST.Method): string {
-    "MethodToSexpr: TODO"
+    StringSeqToSexpr(["Method.Method",
+                      Std.Strings.OfBool(m.isStatic),
+                      Std.Strings.OfBool(m.hasBody),
+                      OptionToSexpr(m.overridingPath,
+                                    x => MapJoin(IdentToSexpr, x)),
+                      NameToSexpr(m.name),
+                      MapJoin(TypeArgDeclToSexpr, m.typeParams),
+                      MapJoin(FormalToSexpr, m.params),
+                      MapJoin(StatementToSexpr, m.body),
+                      MapJoin(TypeToSexpr, m.outTypes),
+                      OptionToSexpr(m.outVars,
+                                    x => MapJoin(IdentToSexpr, x))])
   }
 
   function LiteralToSexpr(literal: DAST.Literal): string {
-    "LiteralToSexpr: TODO"
+    match literal
+    case BoolLiteral(b) =>
+      StringSeqToSexpr(["Literal.BoolLiteral",
+                        Std.Strings.OfBool(b)])
+    case IntLiteral(str, t) =>
+      StringSeqToSexpr(["Literal.IntLiteral",
+                        str,
+                        TypeToSexpr(t)])
+    case DecLiteral(str1, str2, t) =>
+      StringSeqToSexpr(["Literal.DecLiteral",
+                        str1,
+                        str2,
+                        TypeToSexpr(t)])
+    case StringLiteral(str, verbatim) =>
+      StringSeqToSexpr(["Literal.StringLiteral",
+                        str,
+                        Std.Strings.OfBool(verbatim)])
+    case CharLiteral(c) =>
+      StringSeqToSexpr(["Literal.CharLiteral",
+                        Std.Strings.OfChar(c)])
+    case CharLiteralUTF16(n) =>
+      StringSeqToSexpr(["Literal.CharLiteralUTF16",
+                        Std.Strings.OfNat(n)])
+    case Null(t) =>
+      StringSeqToSexpr(["Literal.Null",
+                        TypeToSexpr(t)])
   }
 
   function DatatypeTypeToSexpr(datatypeType: DAST.DatatypeType): string {
-    "DatatypeTypeToSexpr: TODO"
+    StringSeqToSexpr(["DatatypeType.DatatypeType",
+                      MapJoin(IdentToSexpr, datatypeType.path),
+                      MapJoin(AttributeToSexpr, datatypeType.attributes)])
   }
 
   function UnaryOpToSexpr(unOp: DAST.UnaryOp): string {
-    "UnaryOpToSexpr: TODO"
+    match unOp
+    case Not => StringSeqToSexpr(["UnaryOp.Not"])
+    case BitwiseNot => StringSeqToSexpr(["UnaryOp.BitwiseNot"])
+    case Cardinality => StringSeqToSexpr(["UnaryOp.Cardinality"])
   }
 
   function BinOpToSexpr(op: DAST.BinOp): string {
-    "BinOpToSexpr: TODO"
+    match op
+    case Eq(referential, nullable) =>
+      StringSeqToSexpr(["BinOp.Eq",
+                        Std.Strings.OfBool(referential),
+                        Std.Strings.OfBool(nullable)])
+    case Div() =>
+      StringSeqToSexpr(["BinOp.Div"])
+    case EuclidianDiv() =>
+      StringSeqToSexpr(["BinOp.EuclidianDiv"])
+    case Mod() =>
+      StringSeqToSexpr(["BinOp.Mod"])
+    case EuclidianMod() =>
+      StringSeqToSexpr(["BinOp.EuclidianMod"])
+    case Lt() =>
+      StringSeqToSexpr(["BinOp.Lt"])
+    case LtChar() =>
+      StringSeqToSexpr(["BinOp.LtChar"])
+    case Plus() =>
+      StringSeqToSexpr(["BinOp.Plus"])
+    case Minus() =>
+      StringSeqToSexpr(["BinOp.Minus"])
+    case Times() =>
+      StringSeqToSexpr(["BinOp.Times"])
+    case BitwiseAnd() =>
+      StringSeqToSexpr(["BinOp.BitwiseAnd"])
+    case BitwiseOr() =>
+      StringSeqToSexpr(["BinOp.BitwiseOr"])
+    case BitwiseXor() =>
+      StringSeqToSexpr(["BinOp.BitwiseXor"])
+    case BitwiseShiftRight() =>
+      StringSeqToSexpr(["BinOp.BitwiseShiftRight"])
+    case BitwiseShiftLeft() =>
+      StringSeqToSexpr(["BinOp.BitwiseShiftLeft"])
+    case And() =>
+      StringSeqToSexpr(["BinOp.And"])
+    case Or() =>
+      StringSeqToSexpr(["BinOp.Or"])
+    case In() =>
+      StringSeqToSexpr(["BinOp.In"])
+    case SeqProperPrefix() =>
+      StringSeqToSexpr(["BinOp.SeqProperPrefix"])
+    case SeqPrefix() =>
+      StringSeqToSexpr(["BinOp.SeqPrefix"])
+    case SetMerge() =>
+      StringSeqToSexpr(["BinOp.SetMerge"])
+    case SetSubtraction() =>
+      StringSeqToSexpr(["BinOp.SetSubtraction"])
+    case SetIntersection() =>
+      StringSeqToSexpr(["BinOp.SetIntersection"])
+    case Subset() =>
+      StringSeqToSexpr(["BinOp.Subset"])
+    case ProperSubset() =>
+      StringSeqToSexpr(["BinOp.ProperSubset"])
+    case SetDisjoint() =>
+      StringSeqToSexpr(["BinOp.SetDisjoint"])
+    case MapMerge() =>
+      StringSeqToSexpr(["BinOp.MapMerge"])
+    case MapSubtraction() =>
+      StringSeqToSexpr(["BinOp.MapSubtraction"])
+    case MultisetMerge() =>
+      StringSeqToSexpr(["BinOp.MultisetMerge"])
+    case MultisetSubtraction() =>
+      StringSeqToSexpr(["BinOp.MultisetSubtraction"])
+    case MultisetIntersection() =>
+      StringSeqToSexpr(["BinOp.MultisetIntersection"])
+    case Submultiset() =>
+      StringSeqToSexpr(["BinOp.Submultiset"])
+    case ProperSubmultiset() =>
+      StringSeqToSexpr(["BinOp.ProperSubmultiset"])
+    case MultisetDisjoint() =>
+      StringSeqToSexpr(["BinOp.MultisetDisjoint"])
+    case Concat() =>
+      StringSeqToSexpr(["BinOp.Concat"])
+    case Passthrough(str) =>
+      StringSeqToSexpr(["BinOp.Passthrough",
+                        str])
   }
 
   function CollKindToSexpr(collKind: DAST.CollKind): string {
@@ -521,6 +659,10 @@ module {:extern} DafnyToSExpressionCompiler {
 
   function AssignLhsToSexpr(lhs: DAST.AssignLhs): string {
     "AssignLhsToSexpr: TODO"
+  }
+
+  function DatatypeDtorToSexpr(datatypeDtor: DAST.DatatypeDtor): string {
+    "DatatypeDtorToSexpr: TODO"
   }
 
   function OptionToSexpr<T>(opt: Std.Wrappers.Option<T>, f: (T ~> string)): string
