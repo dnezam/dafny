@@ -47,7 +47,7 @@ namespace DafnyToSExpressionCompiler {
       if (unmatched82) {
         Dafny.ISequence<Dafny.Rune> _1882_dafny__name = _source82;
         unmatched82 = false;
-        return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Name.Name"), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_1882_dafny__name)));
+        return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Name.Name"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_1882_dafny__name)));
       }
       throw new System.Exception("unexpected control point");
     }
@@ -58,7 +58,7 @@ namespace DafnyToSExpressionCompiler {
         Dafny.ISequence<Dafny.Rune> _1883_name = _source83.dtor_name;
         Dafny.ISequence<Dafny.ISequence<Dafny.Rune>> _1884_args = _source83.dtor_args;
         unmatched83 = false;
-        return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Attribute.Attribute"), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_1883_name), DafnyToSExpressionCompiler.__default.MapJoin<Dafny.ISequence<Dafny.Rune>>(DafnyToSExpressionCompiler.__default.AddDoubleQuotes, _1884_args)));
+        return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Attribute.Attribute"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_1883_name), DafnyToSExpressionCompiler.__default.MapJoin<Dafny.ISequence<Dafny.Rune>>(DafnyToSExpressionCompiler.__default.EscapeAndQuote, _1884_args)));
       }
       throw new System.Exception("unexpected control point");
     }
@@ -280,7 +280,7 @@ namespace DafnyToSExpressionCompiler {
         if (_source91.is_Passthrough) {
           Dafny.ISequence<Dafny.Rune> _1936_str = _source91.dtor_Passthrough_a0;
           unmatched91 = false;
-          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Type.Passthrough"), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_1936_str)));
+          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Type.Passthrough"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_1936_str)));
         }
       }
       if (unmatched91) {
@@ -453,7 +453,7 @@ namespace DafnyToSExpressionCompiler {
           Dafny.ISequence<_System._ITuple2<Dafny.ISequence<Dafny.Rune>, DAST._IExpression>> _1956_contents = _source95.dtor_contents;
           unmatched95 = false;
           return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Expression.DatatypeValue"), DafnyToSExpressionCompiler.__default.DatatypeTypeToSexpr(_1952_datatypeType), DafnyToSExpressionCompiler.__default.MapJoin<DAST._IType>(DafnyToSExpressionCompiler.__default.TypeToSexpr, _1953_typeArgs), DafnyToSExpressionCompiler.__default.NameToSexpr(_1954_variant), Std.Strings.__default.OfBool(_1955_isCo), DafnyToSExpressionCompiler.__default.MapJoin<_System._ITuple2<Dafny.ISequence<Dafny.Rune>, DAST._IExpression>>(Dafny.Helpers.Id<Func<Dafny.ISequence<_System._ITuple2<Dafny.ISequence<Dafny.Rune>, DAST._IExpression>>, DAST._IExpression, Func<_System._ITuple2<Dafny.ISequence<Dafny.Rune>, DAST._IExpression>, Dafny.ISequence<Dafny.Rune>>>>((_1957_contents, _1958_expr) => ((System.Func<_System._ITuple2<Dafny.ISequence<Dafny.Rune>, DAST._IExpression>, Dafny.ISequence<Dafny.Rune>>)((_1959_x) => {
-            return DafnyToSExpressionCompiler.__default.TwoTupleToSexpr<Dafny.ISequence<Dafny.Rune>, DAST._IExpression>(_1959_x, DafnyToSExpressionCompiler.__default.AddDoubleQuotes, Dafny.Helpers.Id<Func<DAST._IExpression, Func<DAST._IExpression, Dafny.ISequence<Dafny.Rune>>>>((_1960_expr) => ((System.Func<DAST._IExpression, Dafny.ISequence<Dafny.Rune>>)((_1961_z) => {
+            return DafnyToSExpressionCompiler.__default.TwoTupleToSexpr<Dafny.ISequence<Dafny.Rune>, DAST._IExpression>(_1959_x, DafnyToSExpressionCompiler.__default.EscapeAndQuote, Dafny.Helpers.Id<Func<DAST._IExpression, Func<DAST._IExpression, Dafny.ISequence<Dafny.Rune>>>>((_1960_expr) => ((System.Func<DAST._IExpression, Dafny.ISequence<Dafny.Rune>>)((_1961_z) => {
               return DafnyToSExpressionCompiler.__default.ExpressionToSexpr(_1961_z);
             })))(_1958_expr));
           })))(_1956_contents, _pat_let_tv103), _1956_contents)));
@@ -795,7 +795,7 @@ namespace DafnyToSExpressionCompiler {
           Dafny.ISequence<Dafny.Rune> _2067_lbl = _source96.dtor_lbl;
           Dafny.ISequence<DAST._IStatement> _2068_body = _source96.dtor_body;
           unmatched96 = false;
-          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Statement.Labeled"), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_2067_lbl), DafnyToSExpressionCompiler.__default.MapJoinStatementToSexpr(_2068_body)));
+          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Statement.Labeled"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_2067_lbl), DafnyToSExpressionCompiler.__default.MapJoinStatementToSexpr(_2068_body)));
         }
       }
       if (unmatched96) {
@@ -846,7 +846,7 @@ namespace DafnyToSExpressionCompiler {
         if (_source96.is_Break) {
           Std.Wrappers._IOption<Dafny.ISequence<Dafny.Rune>> _2082_toLabel = _source96.dtor_toLabel;
           unmatched96 = false;
-          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Statement.Break"), DafnyToSExpressionCompiler.__default.OptionToSexpr<Dafny.ISequence<Dafny.Rune>>(_2082_toLabel, DafnyToSExpressionCompiler.__default.AddDoubleQuotes)));
+          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Statement.Break"), DafnyToSExpressionCompiler.__default.OptionToSexpr<Dafny.ISequence<Dafny.Rune>>(_2082_toLabel, DafnyToSExpressionCompiler.__default.EscapeAndQuote)));
         }
       }
       if (unmatched96) {
@@ -1017,7 +1017,7 @@ namespace DafnyToSExpressionCompiler {
           Dafny.ISequence<Dafny.Rune> _2112_str = _source103.dtor_IntLiteral_a0;
           DAST._IType _2113_t = _source103.dtor_IntLiteral_a1;
           unmatched103 = false;
-          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Literal.IntLiteral"), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_2112_str), DafnyToSExpressionCompiler.__default.TypeToSexpr(_2113_t)));
+          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Literal.IntLiteral"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_2112_str), DafnyToSExpressionCompiler.__default.TypeToSexpr(_2113_t)));
         }
       }
       if (unmatched103) {
@@ -1026,7 +1026,7 @@ namespace DafnyToSExpressionCompiler {
           Dafny.ISequence<Dafny.Rune> _2115_str2 = _source103.dtor_DecLiteral_a1;
           DAST._IType _2116_t = _source103.dtor_DecLiteral_a2;
           unmatched103 = false;
-          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Literal.DecLiteral"), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_2114_str1), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_2115_str2), DafnyToSExpressionCompiler.__default.TypeToSexpr(_2116_t)));
+          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Literal.DecLiteral"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_2114_str1), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_2115_str2), DafnyToSExpressionCompiler.__default.TypeToSexpr(_2116_t)));
         }
       }
       if (unmatched103) {
@@ -1034,14 +1034,14 @@ namespace DafnyToSExpressionCompiler {
           Dafny.ISequence<Dafny.Rune> _2117_str = _source103.dtor_StringLiteral_a0;
           bool _2118_verbatim = _source103.dtor_verbatim;
           unmatched103 = false;
-          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Literal.StringLiteral"), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_2117_str), Std.Strings.__default.OfBool(_2118_verbatim)));
+          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Literal.StringLiteral"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_2117_str), Std.Strings.__default.OfBool(_2118_verbatim)));
         }
       }
       if (unmatched103) {
         if (_source103.is_CharLiteral) {
           Dafny.Rune _2119_c = _source103.dtor_CharLiteral_a0;
           unmatched103 = false;
-          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Literal.CharLiteral"), Std.Strings.__default.OfChar(_2119_c)));
+          return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("Literal.CharLiteral"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(Std.Strings.__default.OfChar(_2119_c))));
         }
       }
       if (unmatched103) {
@@ -1308,7 +1308,7 @@ namespace DafnyToSExpressionCompiler {
       if (unmatched106) {
         Dafny.ISequence<Dafny.Rune> _2126_str = _source106.dtor_Passthrough_a0;
         unmatched106 = false;
-        return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("BinOp.Passthrough"), DafnyToSExpressionCompiler.__default.AddDoubleQuotes(_2126_str)));
+        return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("BinOp.Passthrough"), DafnyToSExpressionCompiler.__default.EscapeAndQuote(_2126_str)));
       }
       throw new System.Exception("unexpected control point");
     }
@@ -1402,7 +1402,7 @@ namespace DafnyToSExpressionCompiler {
         DAST._IFormal _2135_formal = _source110.dtor_formal;
         Std.Wrappers._IOption<Dafny.ISequence<Dafny.Rune>> _2136_callName = _source110.dtor_callName;
         unmatched110 = false;
-        return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("DatatypeDtor.DatatypeDtor"), DafnyToSExpressionCompiler.__default.FormalToSexpr(_2135_formal), DafnyToSExpressionCompiler.__default.OptionToSexpr<Dafny.ISequence<Dafny.Rune>>(_2136_callName, DafnyToSExpressionCompiler.__default.AddDoubleQuotes)));
+        return DafnyToSExpressionCompiler.__default.StringSeqToSexpr(Dafny.Sequence<Dafny.ISequence<Dafny.Rune>>.FromElements(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("DatatypeDtor.DatatypeDtor"), DafnyToSExpressionCompiler.__default.FormalToSexpr(_2135_formal), DafnyToSExpressionCompiler.__default.OptionToSexpr<Dafny.ISequence<Dafny.Rune>>(_2136_callName, DafnyToSExpressionCompiler.__default.EscapeAndQuote)));
       }
       throw new System.Exception("unexpected control point");
     }
@@ -1416,8 +1416,8 @@ namespace DafnyToSExpressionCompiler {
       }
       throw new System.Exception("unexpected control point");
     }
-    public static Dafny.ISequence<Dafny.Rune> AddDoubleQuotes(Dafny.ISequence<Dafny.Rune> str) {
-      return Dafny.Sequence<Dafny.Rune>.Concat(Dafny.Sequence<Dafny.Rune>.Concat(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("\""), str), Dafny.Sequence<Dafny.Rune>.UnicodeFromString("\""));
+    public static Dafny.ISequence<Dafny.Rune> EscapeAndQuote(Dafny.ISequence<Dafny.Rune> str) {
+      return Dafny.Sequence<Dafny.Rune>.Concat(Dafny.Sequence<Dafny.Rune>.Concat(Dafny.Sequence<Dafny.Rune>.UnicodeFromString("\""), Std.Strings.CharStrEscaping.__default.Escape(str, Dafny.Set<Dafny.Rune>.FromElements(new Dafny.Rune('\"'), new Dafny.Rune('\\')), new Dafny.Rune('\\'))), Dafny.Sequence<Dafny.Rune>.UnicodeFromString("\""));
     }
     public static Dafny.ISequence<Dafny.Rune> OptionToSexpr<__T>(Std.Wrappers._IOption<__T> opt, Func<__T, Dafny.ISequence<Dafny.Rune>> f)
     {

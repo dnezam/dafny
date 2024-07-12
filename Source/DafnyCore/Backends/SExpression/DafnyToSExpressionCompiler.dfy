@@ -14,6 +14,9 @@ module {:extern} DafnyToSExpressionCompiler {
     s := StringSeqToSexpr(["Program", MapJoin(ModuleToSexpr, p)]);
   }
 
+  // TODO Figure out correct way of when to escape strings (and what)
+  //  in particular strings and chars.
+
   function ModuleToSexpr(mod: DAST.Module): string
     decreases mod, 1
   {
@@ -29,15 +32,15 @@ module {:extern} DafnyToSExpressionCompiler {
     match name
     case Name(dafny_name) =>
       StringSeqToSexpr(["Name.Name",
-                        AddDoubleQuotes(dafny_name)])
+                        EscapeAndQuote(dafny_name)])
   }
 
   function AttributeToSexpr(attribute: DAST.Attribute): string {
     match attribute
     case Attribute(name, args) =>
       StringSeqToSexpr(["Attribute.Attribute",
-                        AddDoubleQuotes(name),
-                        MapJoin(AddDoubleQuotes, args)])
+                        EscapeAndQuote(name),
+                        MapJoin(EscapeAndQuote, args)])
   }
 
   function ModuleItemToSexpr(ghost parent: DAST.Module, modItem: DAST.ModuleItem): string
@@ -165,7 +168,7 @@ module {:extern} DafnyToSExpressionCompiler {
                         PrimitiveToSexpr(primitive)])
     case Passthrough(str) =>
       StringSeqToSexpr(["Type.Passthrough",
-                        AddDoubleQuotes(str)])
+                        EscapeAndQuote(str)])
     case TypeArg(id) =>
       StringSeqToSexpr(["Type.TypeArg",
                         IdentToSexpr(id)])
@@ -240,7 +243,7 @@ module {:extern} DafnyToSExpressionCompiler {
                         assert forall x :: x in contents ==> x.1 < expr;
                         MapJoin(x requires x in contents =>
                                   TwoTupleToSexpr(x,
-                                                  AddDoubleQuotes,
+                                                  EscapeAndQuote,
                                                   (z) requires z < expr =>
                                                     ExpressionToSexpr(z)),
                                 contents)])
@@ -434,7 +437,7 @@ module {:extern} DafnyToSExpressionCompiler {
                         MapJoinStatementToSexpr(els)])
     case Labeled(lbl, body)  =>
       StringSeqToSexpr(["Statement.Labeled",
-                        AddDoubleQuotes(lbl),
+                        EscapeAndQuote(lbl),
                         MapJoinStatementToSexpr(body)])
     case While(cond, body)  =>
       StringSeqToSexpr(["Statement.While",
@@ -460,7 +463,7 @@ module {:extern} DafnyToSExpressionCompiler {
       StringSeqToSexpr(["Statement.EarlyReturn"])
     case Break(toLabel) =>
       StringSeqToSexpr(["Statement.Break",
-                        OptionToSexpr(toLabel, AddDoubleQuotes)])
+                        OptionToSexpr(toLabel, EscapeAndQuote)])
     case TailRecursive(body) =>
       StringSeqToSexpr(["Statement.TailRecursive",
                         MapJoinStatementToSexpr(body)])
@@ -554,20 +557,20 @@ module {:extern} DafnyToSExpressionCompiler {
                         Std.Strings.OfBool(b)])
     case IntLiteral(str, t) =>
       StringSeqToSexpr(["Literal.IntLiteral",
-                        AddDoubleQuotes(str),
+                        EscapeAndQuote(str),
                         TypeToSexpr(t)])
     case DecLiteral(str1, str2, t) =>
       StringSeqToSexpr(["Literal.DecLiteral",
-                        AddDoubleQuotes(str1),
-                        AddDoubleQuotes(str2),
+                        EscapeAndQuote(str1),
+                        EscapeAndQuote(str2),
                         TypeToSexpr(t)])
     case StringLiteral(str, verbatim) =>
       StringSeqToSexpr(["Literal.StringLiteral",
-                        AddDoubleQuotes(str),
+                        EscapeAndQuote(str),
                         Std.Strings.OfBool(verbatim)])
     case CharLiteral(c) =>
       StringSeqToSexpr(["Literal.CharLiteral",
-                        Std.Strings.OfChar(c)])
+                        EscapeAndQuote(Std.Strings.OfChar(c))])
     case CharLiteralUTF16(n) =>
       StringSeqToSexpr(["Literal.CharLiteralUTF16",
                         Std.Strings.OfNat(n)])
@@ -667,7 +670,7 @@ module {:extern} DafnyToSExpressionCompiler {
       StringSeqToSexpr(["BinOp.Concat"])
     case Passthrough(str) =>
       StringSeqToSexpr(["BinOp.Passthrough",
-                        AddDoubleQuotes(str)])
+                        EscapeAndQuote(str)])
   }
 
   function CollKindToSexpr(collKind: DAST.CollKind): string {
@@ -710,7 +713,7 @@ module {:extern} DafnyToSExpressionCompiler {
     case DatatypeDtor(formal, callName) =>
       StringSeqToSexpr(["DatatypeDtor.DatatypeDtor",
                         FormalToSexpr(formal),
-                        OptionToSexpr(callName, AddDoubleQuotes)])
+                        OptionToSexpr(callName, EscapeAndQuote)])
   }
 
   function CallSignatureToSexpr(signature: DAST.CallSignature): string {
@@ -720,8 +723,10 @@ module {:extern} DafnyToSExpressionCompiler {
                         MapJoin(FormalToSexpr, parameters)])
   }
 
-  function AddDoubleQuotes(str: string): string {
-    "\"" + str + "\""
+  // Based on HOL's lexer/parser for S-Expressions
+  // https://github.com/HOL-Theorem-Prover/HOL/blob/8f84e1ea4022c0ad8390b631fbaa4298bc1a28d3/examples/formal-languages/context-free/simpleSexpScript.sml#L147C1-L152C34
+  function EscapeAndQuote(str: string): string {
+    "\"" + Std.Strings.CharStrEscaping.Escape(str, {'\"', '\\'}, '\\') + "\""
   }
 
   function OptionToSexpr<T>(opt: Std.Wrappers.Option<T>, f: (T ~> string)): string
