@@ -723,8 +723,6 @@ module {:extern} DafnyToSExpressionCompiler {
                         MapJoin(FormalToSexpr, parameters)])
   }
 
-  // Based on HOL's lexer/parser for S-Expressions
-  // https://github.com/HOL-Theorem-Prover/HOL/blob/8f84e1ea4022c0ad8390b631fbaa4298bc1a28d3/examples/formal-languages/context-free/simpleSexpScript.sml#L147C1-L152C34
   function EscapeAndQuote(str: string): string {
     "\"" + Std.Strings.CharStrEscaping.Escape(str, {'\"', '\\'}, '\\') + "\""
   }
