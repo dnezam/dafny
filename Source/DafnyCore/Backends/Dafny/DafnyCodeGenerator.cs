@@ -3396,12 +3396,6 @@ namespace Microsoft.Dafny.Compilers {
       }
     }
 
-    protected override void OrganizeModules(Program program, out List<ModuleDefinition> modules) {
-      modules = program.CompileModules.ToList();
-      modules.Sort((a, b) =>
-        String.Compare(a.FullDafnyName, b.FullDafnyName, StringComparison.Ordinal));
-    }
-
     protected override void EmitHaltRecoveryStmt(Statement body, string haltMessageVarName, Statement recoveryBody, ConcreteSyntaxTree wr) {
       TrStmt(body, wr);
     }
