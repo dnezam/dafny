@@ -503,7 +503,7 @@ module {:extern "DAST"} DAST {
     ToMultiset(Expression) |
     This() |
     Ite(cond: Expression, thn: Expression, els: Expression) |
-    UnOp(unOp: UnaryOp, expr: Expression, format1: Format.UnaryOpFormat) |
+    UnOp(unOp: UnaryOp, expr: Expression, exprType: Type, format1: Format.UnaryOpFormat) |
     BinOp(op: TypedBinOp, left: Expression, right: Expression, format2: Format.BinaryOpFormat) |
     ArrayLen(expr: Expression, exprType: Type, dim: nat, native: bool) |
     MapKeys(expr: Expression) |

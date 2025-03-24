@@ -3849,7 +3849,7 @@ module {:extern "DCOMP"} DafnyToRustCompiler {
           readIdents := recIdentsCond + recIdentsT + recIdentsF;
           return;
         }
-        case UnOp(Not, e, format) => {
+        case UnOp(Not, e, _, format) => {
           var recursiveGen, _, recIdents := GenExpr(e, selfIdent, env, OwnershipOwned);
 
           r := R.UnaryOp("!", recursiveGen, format);
@@ -3857,7 +3857,7 @@ module {:extern "DCOMP"} DafnyToRustCompiler {
           readIdents := recIdents;
           return;
         }
-        case UnOp(BitwiseNot, e, format) => {
+        case UnOp(BitwiseNot, e, _, format) => {
           var recursiveGen, _, recIdents := GenExpr(e, selfIdent, env, OwnershipOwned);
 
           r := R.UnaryOp("!", recursiveGen, format);
@@ -3865,7 +3865,7 @@ module {:extern "DCOMP"} DafnyToRustCompiler {
           readIdents := recIdents;
           return;
         }
-        case UnOp(Cardinality, e, format) => {
+        case UnOp(Cardinality, e, _, format) => {
           var recursiveGen, recOwned, recIdents := GenExpr(e, selfIdent, env, OwnershipAutoBorrowed);
 
           r := recursiveGen.Sel("cardinality").Apply0();

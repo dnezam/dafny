@@ -7188,8 +7188,8 @@ namespace DAST {
     public static _IExpression create_Ite(DAST._IExpression cond, DAST._IExpression thn, DAST._IExpression els) {
       return new Expression_Ite(cond, thn, els);
     }
-    public static _IExpression create_UnOp(DAST._IUnaryOp unOp, DAST._IExpression expr, DAST.Format._IUnaryOpFormat format1) {
-      return new Expression_UnOp(unOp, expr, format1);
+    public static _IExpression create_UnOp(DAST._IUnaryOp unOp, DAST._IExpression expr, DAST._IType exprType, DAST.Format._IUnaryOpFormat format1) {
+      return new Expression_UnOp(unOp, expr, exprType, format1);
     }
     public static _IExpression create_BinOp(DAST._ITypedBinOp op, DAST._IExpression left, DAST._IExpression right, DAST.Format._IBinaryOpFormat format2) {
       return new Expression_BinOp(op, left, right, format2);
@@ -7524,6 +7524,7 @@ namespace DAST {
         var d = this;
         if (d is Expression_SeqUpdate) { return ((Expression_SeqUpdate)d)._exprType; }
         if (d is Expression_MapUpdate) { return ((Expression_MapUpdate)d)._exprType; }
+        if (d is Expression_UnOp) { return ((Expression_UnOp)d)._exprType; }
         return ((Expression_ArrayLen)d)._exprType;
       }
     }
@@ -8579,25 +8580,28 @@ namespace DAST {
   public class Expression_UnOp : Expression {
     public readonly DAST._IUnaryOp _unOp;
     public readonly DAST._IExpression _expr;
+    public readonly DAST._IType _exprType;
     public readonly DAST.Format._IUnaryOpFormat _format1;
-    public Expression_UnOp(DAST._IUnaryOp unOp, DAST._IExpression expr, DAST.Format._IUnaryOpFormat format1) : base() {
+    public Expression_UnOp(DAST._IUnaryOp unOp, DAST._IExpression expr, DAST._IType exprType, DAST.Format._IUnaryOpFormat format1) : base() {
       this._unOp = unOp;
       this._expr = expr;
+      this._exprType = exprType;
       this._format1 = format1;
     }
     public override _IExpression DowncastClone() {
       if (this is _IExpression dt) { return dt; }
-      return new Expression_UnOp(_unOp, _expr, _format1);
+      return new Expression_UnOp(_unOp, _expr, _exprType, _format1);
     }
     public override bool Equals(object other) {
       var oth = other as DAST.Expression_UnOp;
-      return oth != null && object.Equals(this._unOp, oth._unOp) && object.Equals(this._expr, oth._expr) && object.Equals(this._format1, oth._format1);
+      return oth != null && object.Equals(this._unOp, oth._unOp) && object.Equals(this._expr, oth._expr) && object.Equals(this._exprType, oth._exprType) && object.Equals(this._format1, oth._format1);
     }
     public override int GetHashCode() {
       ulong hash = 5381;
       hash = ((hash << 5) + hash) + 23;
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._unOp));
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._expr));
+      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._exprType));
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._format1));
       return (int) hash;
     }
@@ -8607,6 +8611,8 @@ namespace DAST {
       s += Dafny.Helpers.ToString(this._unOp);
       s += ", ";
       s += Dafny.Helpers.ToString(this._expr);
+      s += ", ";
+      s += Dafny.Helpers.ToString(this._exprType);
       s += ", ";
       s += Dafny.Helpers.ToString(this._format1);
       s += ")";
