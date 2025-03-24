@@ -1141,7 +1141,7 @@ module {:extern "Defs"} DafnyToRustCompilerDefinitions {
       case DeclareVar(name, _, _) =>
         NotAssigned // If it's the same name, it's shadowed
       case Return(_) | EarlyReturn() | JumpTailCallStart() => NotAssigned
-      case Print(_) => NotAssigned
+      case Print(_, _) => NotAssigned
       case _ => Unknown
     };
     if stop then thisAssign else thisAssign.Then(tailAssigned)
@@ -1172,7 +1172,7 @@ module {:extern "Defs"} DafnyToRustCompilerDefinitions {
           if name == dafny_name { return NotAssigned; /* Shadowed */ }
         case Return(_) | EarlyReturn() | JumpTailCallStart() =>
           return NotAssigned;
-        case Print(_) =>
+        case Print(_, _) =>
         case _ =>
           return Unknown;
       }

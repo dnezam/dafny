@@ -515,7 +515,7 @@ namespace Microsoft.Dafny.Compilers {
     void AddBuildable(BuildableStatement item);
 
     public static DAST.Statement UnsupportedToStatement(string why) {
-      return (DAST.Statement)DAST.Statement.create_Print(ExprContainer.UnsupportedToExpr(why));
+      return (DAST.Statement)DAST.Statement.create_Print(ExprContainer.UnsupportedToExpr(why), DAST.Type.create_Primitive(DAST.Primitive.create_String()));
     }
 
     List<object> ForkList();
@@ -538,8 +538,8 @@ namespace Microsoft.Dafny.Compilers {
       }
     }
 
-    public void Print(DAST.Expression expr) {
-      AddStatement((DAST.Statement)DAST.Statement.create_Print(expr));
+    public void Print(DAST.Expression expr, DAST.Type type) {
+      AddStatement((DAST.Statement)DAST.Statement.create_Print(expr, type));
     }
 
     public AssignBuilder Assign() {

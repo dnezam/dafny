@@ -67,8 +67,8 @@ module {:extern "DefsCoverage"} DafnyToRustCompilerDefinitionsCoverage {
     Expect(DetectAssignmentStatus([Return(z)] + assigns_x, x) == NotAssigned);
     Expect(DetectAssignmentStatus([EarlyReturn()] + assigns_x, x) == NotAssigned);
     Expect(DetectAssignmentStatus([JumpTailCallStart()] + assigns_x, x) == NotAssigned);
-    Expect(DetectAssignmentStatus([Print(z)] + assigns_x, x) == SurelyAssigned);
-    Expect(DetectAssignmentStatus([Print(z)] + assigns_x, x) == SurelyAssigned);
+    Expect(DetectAssignmentStatus([Print(z, Type.Tuple([]))] + assigns_x, x) == SurelyAssigned);
+    Expect(DetectAssignmentStatus([Print(z, Type.Tuple([]))] + assigns_x, x) == SurelyAssigned);
     Expect(DetectAssignmentStatus([While(z, [])] + assigns_x, x) == Unknown);
     Expect(DetectAssignmentStatus([If(cond, assigns_x, [If(cond, assigns_x, assigns_y)])], x) == Unknown);
     Expect(

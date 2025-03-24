@@ -4839,7 +4839,6 @@ namespace DAST {
     Std.Wrappers._IOption<Dafny.ISequence<Dafny.ISequence<Dafny.Rune>>> dtor_outs { get; }
     DAST._IExpression dtor_expr { get; }
     Std.Wrappers._IOption<Dafny.ISequence<Dafny.Rune>> dtor_toLabel { get; }
-    DAST._IExpression dtor_Print_a0 { get; }
     Dafny.ISequence<DAST._IField> dtor_fields { get; }
     _IStatement DowncastClone();
   }
@@ -4893,8 +4892,8 @@ namespace DAST {
     public static _IStatement create_Halt() {
       return new Statement_Halt();
     }
-    public static _IStatement create_Print(DAST._IExpression _a0) {
-      return new Statement_Print(_a0);
+    public static _IStatement create_Print(DAST._IExpression expr, DAST._IType typ) {
+      return new Statement_Print(expr, typ);
     }
     public static _IStatement create_ConstructorNewSeparator(Dafny.ISequence<DAST._IField> fields) {
       return new Statement_ConstructorNewSeparator(fields);
@@ -4923,7 +4922,8 @@ namespace DAST {
     public DAST._IType dtor_typ {
       get {
         var d = this;
-        return ((Statement_DeclareVar)d)._typ;
+        if (d is Statement_DeclareVar) { return ((Statement_DeclareVar)d)._typ; }
+        return ((Statement_Print)d)._typ;
       }
     }
     public Std.Wrappers._IOption<DAST._IExpression> dtor_maybeValue {
@@ -5029,19 +5029,14 @@ namespace DAST {
     public DAST._IExpression dtor_expr {
       get {
         var d = this;
-        return ((Statement_Return)d)._expr;
+        if (d is Statement_Return) { return ((Statement_Return)d)._expr; }
+        return ((Statement_Print)d)._expr;
       }
     }
     public Std.Wrappers._IOption<Dafny.ISequence<Dafny.Rune>> dtor_toLabel {
       get {
         var d = this;
         return ((Statement_Break)d)._toLabel;
-      }
-    }
-    public DAST._IExpression dtor_Print_a0 {
-      get {
-        var d = this;
-        return ((Statement_Print)d)._a0;
       }
     }
     public Dafny.ISequence<DAST._IField> dtor_fields {
@@ -5456,28 +5451,33 @@ namespace DAST {
     }
   }
   public class Statement_Print : Statement {
-    public readonly DAST._IExpression _a0;
-    public Statement_Print(DAST._IExpression _a0) : base() {
-      this._a0 = _a0;
+    public readonly DAST._IExpression _expr;
+    public readonly DAST._IType _typ;
+    public Statement_Print(DAST._IExpression expr, DAST._IType typ) : base() {
+      this._expr = expr;
+      this._typ = typ;
     }
     public override _IStatement DowncastClone() {
       if (this is _IStatement dt) { return dt; }
-      return new Statement_Print(_a0);
+      return new Statement_Print(_expr, _typ);
     }
     public override bool Equals(object other) {
       var oth = other as DAST.Statement_Print;
-      return oth != null && object.Equals(this._a0, oth._a0);
+      return oth != null && object.Equals(this._expr, oth._expr) && object.Equals(this._typ, oth._typ);
     }
     public override int GetHashCode() {
       ulong hash = 5381;
       hash = ((hash << 5) + hash) + 13;
-      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._a0));
+      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._expr));
+      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._typ));
       return (int) hash;
     }
     public override string ToString() {
       string s = "DAST.Statement.Print";
       s += "(";
-      s += Dafny.Helpers.ToString(this._a0);
+      s += Dafny.Helpers.ToString(this._expr);
+      s += ", ";
+      s += Dafny.Helpers.ToString(this._typ);
       s += ")";
       return s;
     }

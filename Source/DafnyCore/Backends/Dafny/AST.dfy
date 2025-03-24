@@ -441,7 +441,7 @@ module {:extern "DAST"} DAST {
     TailRecursive(body: seq<Statement>) |
     JumpTailCallStart() |
     Halt() |
-    Print(Expression) |
+    Print(expr: Expression, typ: Type) |
     ConstructorNewSeparator(fields: seq<Field>)
   {
   }

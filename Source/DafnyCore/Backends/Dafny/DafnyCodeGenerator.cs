@@ -1271,7 +1271,7 @@ namespace Microsoft.Dafny.Compilers {
       if (wr is BuilderSyntaxTree<StatementContainer> stmtContainer) {
         ExprBuffer buffer = new(null);
         EmitExpr(arg, false, new BuilderSyntaxTree<ExprContainer>(buffer, this), wr);
-        stmtContainer.Builder.Print(buffer.Finish());
+        stmtContainer.Builder.Print(buffer.Finish(), GenType(arg.Type));
       } else {
         throw new InvalidOperationException("Cannot print outside of a statement container: " + currentBuilder);
       }
