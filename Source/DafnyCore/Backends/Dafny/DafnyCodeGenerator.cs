@@ -2124,7 +2124,9 @@ namespace Microsoft.Dafny.Compilers {
         if (dtor.EnclosingClass is TupleTypeDecl) {
           return new ExprLvalue((DAST.Expression)DAST.Expression.create_TupleSelect(
             objExpr,
-            int.Parse(dtor.CorrespondingFormals[0].NameForCompilation), GenType(expectedType)
+            int.Parse(dtor.CorrespondingFormals[0].NameForCompilation),
+            ((TupleTypeDecl)dtor.EnclosingClass).NonGhostDims,
+            GenType(expectedType)
           ), null, this);
         } else {
           var attributes = member.Attributes ??
@@ -2497,7 +2499,9 @@ namespace Microsoft.Dafny.Compilers {
           if (ctor.EnclosingDatatype is TupleTypeDecl) {
             builder.Builder.AddExpr((DAST.Expression)DAST.Expression.create_TupleSelect(
               sourceAST,
-              int.Parse(dtor.NameForCompilation), GenType(dtor.Type)
+              int.Parse(dtor.NameForCompilation),
+              ((TupleTypeDecl)ctor.EnclosingDatatype).NonGhostDims,
+              GenType(dtor.Type)
             ));
           } else {
             var compileName = GetExtractOverrideName(dtor.Attributes, dtor.GetOrCreateCompileName(currentIdGenerator));

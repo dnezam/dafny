@@ -7218,8 +7218,8 @@ namespace DAST {
     public static _IExpression create_IndexRange(DAST._IExpression expr, bool isArray, Std.Wrappers._IOption<DAST._IExpression> low, Std.Wrappers._IOption<DAST._IExpression> high) {
       return new Expression_IndexRange(expr, isArray, low, high);
     }
-    public static _IExpression create_TupleSelect(DAST._IExpression expr, BigInteger index, DAST._IType fieldType) {
-      return new Expression_TupleSelect(expr, index, fieldType);
+    public static _IExpression create_TupleSelect(DAST._IExpression expr, BigInteger index, BigInteger dim, DAST._IType fieldType) {
+      return new Expression_TupleSelect(expr, index, dim, fieldType);
     }
     public static _IExpression create_Call(DAST._IExpression @on, DAST._ICallName callName, Dafny.ISequence<DAST._IType> typeArgs, Dafny.ISequence<DAST._IExpression> args) {
       return new Expression_Call(@on, callName, typeArgs, args);
@@ -7599,7 +7599,8 @@ namespace DAST {
     public BigInteger dtor_dim {
       get {
         var d = this;
-        return ((Expression_ArrayLen)d)._dim;
+        if (d is Expression_ArrayLen) { return ((Expression_ArrayLen)d)._dim; }
+        return ((Expression_TupleSelect)d)._dim;
       }
     }
     public bool dtor_native {
@@ -8965,25 +8966,28 @@ namespace DAST {
   public class Expression_TupleSelect : Expression {
     public readonly DAST._IExpression _expr;
     public readonly BigInteger _index;
+    public readonly BigInteger _dim;
     public readonly DAST._IType _fieldType;
-    public Expression_TupleSelect(DAST._IExpression expr, BigInteger index, DAST._IType fieldType) : base() {
+    public Expression_TupleSelect(DAST._IExpression expr, BigInteger index, BigInteger dim, DAST._IType fieldType) : base() {
       this._expr = expr;
       this._index = index;
+      this._dim = dim;
       this._fieldType = fieldType;
     }
     public override _IExpression DowncastClone() {
       if (this is _IExpression dt) { return dt; }
-      return new Expression_TupleSelect(_expr, _index, _fieldType);
+      return new Expression_TupleSelect(_expr, _index, _dim, _fieldType);
     }
     public override bool Equals(object other) {
       var oth = other as DAST.Expression_TupleSelect;
-      return oth != null && object.Equals(this._expr, oth._expr) && this._index == oth._index && object.Equals(this._fieldType, oth._fieldType);
+      return oth != null && object.Equals(this._expr, oth._expr) && this._index == oth._index && this._dim == oth._dim && object.Equals(this._fieldType, oth._fieldType);
     }
     public override int GetHashCode() {
       ulong hash = 5381;
       hash = ((hash << 5) + hash) + 33;
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._expr));
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._index));
+      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._dim));
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._fieldType));
       return (int) hash;
     }
@@ -8993,6 +8997,8 @@ namespace DAST {
       s += Dafny.Helpers.ToString(this._expr);
       s += ", ";
       s += Dafny.Helpers.ToString(this._index);
+      s += ", ";
+      s += Dafny.Helpers.ToString(this._dim);
       s += ", ";
       s += Dafny.Helpers.ToString(this._fieldType);
       s += ")";

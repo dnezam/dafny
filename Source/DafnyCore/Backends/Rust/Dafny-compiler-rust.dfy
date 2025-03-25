@@ -4148,7 +4148,7 @@ module {:extern "DCOMP"} DafnyToRustCompiler {
           r, resultingOwnership := FromOwned(r, expectedOwnership);
           return;
         }
-        case TupleSelect(on, idx, fieldType) => {
+        case TupleSelect(on, idx, _, fieldType) => {
           var onExpr, onOwnership, recIdents := GenExpr(on, selfIdent, env, OwnershipAutoBorrowed);
           var selName := Strings.OfNat(idx); // Rust tuples
           match fieldType {
