@@ -441,7 +441,7 @@ module {:extern "DAST"} DAST {
     TailRecursive(body: seq<Statement>) |
     JumpTailCallStart() |
     Halt() |
-    Print(Expression) |
+    Print(expr: Expression, typ: Type) |
     ConstructorNewSeparator(fields: seq<Field>)
   {
   }
@@ -503,7 +503,7 @@ module {:extern "DAST"} DAST {
     ToMultiset(Expression) |
     This() |
     Ite(cond: Expression, thn: Expression, els: Expression) |
-    UnOp(unOp: UnaryOp, expr: Expression, format1: Format.UnaryOpFormat) |
+    UnOp(unOp: UnaryOp, expr: Expression, exprType: Type, format1: Format.UnaryOpFormat) |
     BinOp(op: TypedBinOp, left: Expression, right: Expression, format2: Format.BinaryOpFormat) |
     ArrayLen(expr: Expression, exprType: Type, dim: nat, native: bool) |
     MapKeys(expr: Expression) |
@@ -513,7 +513,7 @@ module {:extern "DAST"} DAST {
     SelectFn(expr: Expression, field: VarName, onDatatype: bool, isStatic: bool, isConstant: bool, arguments: seq<Type>) |
     Index(expr: Expression, collKind: CollKind, indices: seq<Expression>) |
     IndexRange(expr: Expression, isArray: bool, low: Option<Expression>, high: Option<Expression>) |
-    TupleSelect(expr: Expression, index: nat, fieldType: Type) |
+    TupleSelect(expr: Expression, index: nat, dim: nat, fieldType: Type) |
     Call(on: Expression, callName: CallName, typeArgs: seq<Type>, args: seq<Expression>) |
     Lambda(params: seq<Formal>, retType: Type, body: seq<Statement>) |
     BetaRedex(values: seq<(Formal, Expression)>, retType: Type, expr: Expression) |

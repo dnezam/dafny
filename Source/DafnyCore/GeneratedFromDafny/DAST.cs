@@ -4839,7 +4839,6 @@ namespace DAST {
     Std.Wrappers._IOption<Dafny.ISequence<Dafny.ISequence<Dafny.Rune>>> dtor_outs { get; }
     DAST._IExpression dtor_expr { get; }
     Std.Wrappers._IOption<Dafny.ISequence<Dafny.Rune>> dtor_toLabel { get; }
-    DAST._IExpression dtor_Print_a0 { get; }
     Dafny.ISequence<DAST._IField> dtor_fields { get; }
     _IStatement DowncastClone();
   }
@@ -4893,8 +4892,8 @@ namespace DAST {
     public static _IStatement create_Halt() {
       return new Statement_Halt();
     }
-    public static _IStatement create_Print(DAST._IExpression _a0) {
-      return new Statement_Print(_a0);
+    public static _IStatement create_Print(DAST._IExpression expr, DAST._IType typ) {
+      return new Statement_Print(expr, typ);
     }
     public static _IStatement create_ConstructorNewSeparator(Dafny.ISequence<DAST._IField> fields) {
       return new Statement_ConstructorNewSeparator(fields);
@@ -4923,7 +4922,8 @@ namespace DAST {
     public DAST._IType dtor_typ {
       get {
         var d = this;
-        return ((Statement_DeclareVar)d)._typ;
+        if (d is Statement_DeclareVar) { return ((Statement_DeclareVar)d)._typ; }
+        return ((Statement_Print)d)._typ;
       }
     }
     public Std.Wrappers._IOption<DAST._IExpression> dtor_maybeValue {
@@ -5029,19 +5029,14 @@ namespace DAST {
     public DAST._IExpression dtor_expr {
       get {
         var d = this;
-        return ((Statement_Return)d)._expr;
+        if (d is Statement_Return) { return ((Statement_Return)d)._expr; }
+        return ((Statement_Print)d)._expr;
       }
     }
     public Std.Wrappers._IOption<Dafny.ISequence<Dafny.Rune>> dtor_toLabel {
       get {
         var d = this;
         return ((Statement_Break)d)._toLabel;
-      }
-    }
-    public DAST._IExpression dtor_Print_a0 {
-      get {
-        var d = this;
-        return ((Statement_Print)d)._a0;
       }
     }
     public Dafny.ISequence<DAST._IField> dtor_fields {
@@ -5456,28 +5451,33 @@ namespace DAST {
     }
   }
   public class Statement_Print : Statement {
-    public readonly DAST._IExpression _a0;
-    public Statement_Print(DAST._IExpression _a0) : base() {
-      this._a0 = _a0;
+    public readonly DAST._IExpression _expr;
+    public readonly DAST._IType _typ;
+    public Statement_Print(DAST._IExpression expr, DAST._IType typ) : base() {
+      this._expr = expr;
+      this._typ = typ;
     }
     public override _IStatement DowncastClone() {
       if (this is _IStatement dt) { return dt; }
-      return new Statement_Print(_a0);
+      return new Statement_Print(_expr, _typ);
     }
     public override bool Equals(object other) {
       var oth = other as DAST.Statement_Print;
-      return oth != null && object.Equals(this._a0, oth._a0);
+      return oth != null && object.Equals(this._expr, oth._expr) && object.Equals(this._typ, oth._typ);
     }
     public override int GetHashCode() {
       ulong hash = 5381;
       hash = ((hash << 5) + hash) + 13;
-      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._a0));
+      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._expr));
+      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._typ));
       return (int) hash;
     }
     public override string ToString() {
       string s = "DAST.Statement.Print";
       s += "(";
-      s += Dafny.Helpers.ToString(this._a0);
+      s += Dafny.Helpers.ToString(this._expr);
+      s += ", ";
+      s += Dafny.Helpers.ToString(this._typ);
       s += ")";
       return s;
     }
@@ -7188,8 +7188,8 @@ namespace DAST {
     public static _IExpression create_Ite(DAST._IExpression cond, DAST._IExpression thn, DAST._IExpression els) {
       return new Expression_Ite(cond, thn, els);
     }
-    public static _IExpression create_UnOp(DAST._IUnaryOp unOp, DAST._IExpression expr, DAST.Format._IUnaryOpFormat format1) {
-      return new Expression_UnOp(unOp, expr, format1);
+    public static _IExpression create_UnOp(DAST._IUnaryOp unOp, DAST._IExpression expr, DAST._IType exprType, DAST.Format._IUnaryOpFormat format1) {
+      return new Expression_UnOp(unOp, expr, exprType, format1);
     }
     public static _IExpression create_BinOp(DAST._ITypedBinOp op, DAST._IExpression left, DAST._IExpression right, DAST.Format._IBinaryOpFormat format2) {
       return new Expression_BinOp(op, left, right, format2);
@@ -7218,8 +7218,8 @@ namespace DAST {
     public static _IExpression create_IndexRange(DAST._IExpression expr, bool isArray, Std.Wrappers._IOption<DAST._IExpression> low, Std.Wrappers._IOption<DAST._IExpression> high) {
       return new Expression_IndexRange(expr, isArray, low, high);
     }
-    public static _IExpression create_TupleSelect(DAST._IExpression expr, BigInteger index, DAST._IType fieldType) {
-      return new Expression_TupleSelect(expr, index, fieldType);
+    public static _IExpression create_TupleSelect(DAST._IExpression expr, BigInteger index, BigInteger dim, DAST._IType fieldType) {
+      return new Expression_TupleSelect(expr, index, dim, fieldType);
     }
     public static _IExpression create_Call(DAST._IExpression @on, DAST._ICallName callName, Dafny.ISequence<DAST._IType> typeArgs, Dafny.ISequence<DAST._IExpression> args) {
       return new Expression_Call(@on, callName, typeArgs, args);
@@ -7524,6 +7524,7 @@ namespace DAST {
         var d = this;
         if (d is Expression_SeqUpdate) { return ((Expression_SeqUpdate)d)._exprType; }
         if (d is Expression_MapUpdate) { return ((Expression_MapUpdate)d)._exprType; }
+        if (d is Expression_UnOp) { return ((Expression_UnOp)d)._exprType; }
         return ((Expression_ArrayLen)d)._exprType;
       }
     }
@@ -7598,7 +7599,8 @@ namespace DAST {
     public BigInteger dtor_dim {
       get {
         var d = this;
-        return ((Expression_ArrayLen)d)._dim;
+        if (d is Expression_ArrayLen) { return ((Expression_ArrayLen)d)._dim; }
+        return ((Expression_TupleSelect)d)._dim;
       }
     }
     public bool dtor_native {
@@ -8579,25 +8581,28 @@ namespace DAST {
   public class Expression_UnOp : Expression {
     public readonly DAST._IUnaryOp _unOp;
     public readonly DAST._IExpression _expr;
+    public readonly DAST._IType _exprType;
     public readonly DAST.Format._IUnaryOpFormat _format1;
-    public Expression_UnOp(DAST._IUnaryOp unOp, DAST._IExpression expr, DAST.Format._IUnaryOpFormat format1) : base() {
+    public Expression_UnOp(DAST._IUnaryOp unOp, DAST._IExpression expr, DAST._IType exprType, DAST.Format._IUnaryOpFormat format1) : base() {
       this._unOp = unOp;
       this._expr = expr;
+      this._exprType = exprType;
       this._format1 = format1;
     }
     public override _IExpression DowncastClone() {
       if (this is _IExpression dt) { return dt; }
-      return new Expression_UnOp(_unOp, _expr, _format1);
+      return new Expression_UnOp(_unOp, _expr, _exprType, _format1);
     }
     public override bool Equals(object other) {
       var oth = other as DAST.Expression_UnOp;
-      return oth != null && object.Equals(this._unOp, oth._unOp) && object.Equals(this._expr, oth._expr) && object.Equals(this._format1, oth._format1);
+      return oth != null && object.Equals(this._unOp, oth._unOp) && object.Equals(this._expr, oth._expr) && object.Equals(this._exprType, oth._exprType) && object.Equals(this._format1, oth._format1);
     }
     public override int GetHashCode() {
       ulong hash = 5381;
       hash = ((hash << 5) + hash) + 23;
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._unOp));
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._expr));
+      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._exprType));
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._format1));
       return (int) hash;
     }
@@ -8607,6 +8612,8 @@ namespace DAST {
       s += Dafny.Helpers.ToString(this._unOp);
       s += ", ";
       s += Dafny.Helpers.ToString(this._expr);
+      s += ", ";
+      s += Dafny.Helpers.ToString(this._exprType);
       s += ", ";
       s += Dafny.Helpers.ToString(this._format1);
       s += ")";
@@ -8959,25 +8966,28 @@ namespace DAST {
   public class Expression_TupleSelect : Expression {
     public readonly DAST._IExpression _expr;
     public readonly BigInteger _index;
+    public readonly BigInteger _dim;
     public readonly DAST._IType _fieldType;
-    public Expression_TupleSelect(DAST._IExpression expr, BigInteger index, DAST._IType fieldType) : base() {
+    public Expression_TupleSelect(DAST._IExpression expr, BigInteger index, BigInteger dim, DAST._IType fieldType) : base() {
       this._expr = expr;
       this._index = index;
+      this._dim = dim;
       this._fieldType = fieldType;
     }
     public override _IExpression DowncastClone() {
       if (this is _IExpression dt) { return dt; }
-      return new Expression_TupleSelect(_expr, _index, _fieldType);
+      return new Expression_TupleSelect(_expr, _index, _dim, _fieldType);
     }
     public override bool Equals(object other) {
       var oth = other as DAST.Expression_TupleSelect;
-      return oth != null && object.Equals(this._expr, oth._expr) && this._index == oth._index && object.Equals(this._fieldType, oth._fieldType);
+      return oth != null && object.Equals(this._expr, oth._expr) && this._index == oth._index && this._dim == oth._dim && object.Equals(this._fieldType, oth._fieldType);
     }
     public override int GetHashCode() {
       ulong hash = 5381;
       hash = ((hash << 5) + hash) + 33;
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._expr));
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._index));
+      hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._dim));
       hash = ((hash << 5) + hash) + ((ulong)Dafny.Helpers.GetHashCode(this._fieldType));
       return (int) hash;
     }
@@ -8987,6 +8997,8 @@ namespace DAST {
       s += Dafny.Helpers.ToString(this._expr);
       s += ", ";
       s += Dafny.Helpers.ToString(this._index);
+      s += ", ";
+      s += Dafny.Helpers.ToString(this._dim);
       s += ", ";
       s += Dafny.Helpers.ToString(this._fieldType);
       s += ")";

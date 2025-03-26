@@ -1302,7 +1302,7 @@ namespace Microsoft.Dafny.Compilers {
       if (wr is BuilderSyntaxTree<StatementContainer> stmtContainer) {
         ExprBuffer buffer = new(null);
         EmitExpr(arg, false, new BuilderSyntaxTree<ExprContainer>(buffer, this), wr);
-        stmtContainer.Builder.Print(buffer.Finish());
+        stmtContainer.Builder.Print(buffer.Finish(), GenType(arg.Type));
       } else {
         throw new InvalidOperationException("Cannot print outside of a statement container: " + currentBuilder);
       }
@@ -2155,7 +2155,9 @@ namespace Microsoft.Dafny.Compilers {
         if (dtor.EnclosingClass is TupleTypeDecl) {
           return new ExprLvalue((DAST.Expression)DAST.Expression.create_TupleSelect(
             objExpr,
-            int.Parse(dtor.CorrespondingFormals[0].NameForCompilation), GenType(expectedType)
+            int.Parse(dtor.CorrespondingFormals[0].NameForCompilation),
+            ((TupleTypeDecl)dtor.EnclosingClass).NonGhostDims,
+            GenType(expectedType)
           ), null, this);
         } else {
           var attributes = member.Attributes ??
@@ -2528,7 +2530,9 @@ namespace Microsoft.Dafny.Compilers {
           if (ctor.EnclosingDatatype is TupleTypeDecl) {
             builder.Builder.AddExpr((DAST.Expression)DAST.Expression.create_TupleSelect(
               sourceAST,
-              int.Parse(dtor.NameForCompilation), GenType(dtor.Type)
+              int.Parse(dtor.NameForCompilation),
+              ((TupleTypeDecl)ctor.EnclosingDatatype).NonGhostDims,
+              GenType(dtor.Type)
             ));
           } else {
             var compileName = GetExtractOverrideName(dtor.Attributes, dtor.GetOrCreateCompileName(currentIdGenerator));
@@ -2759,6 +2763,7 @@ namespace Microsoft.Dafny.Compilers {
               container.Builder.AddExpr((DAST.Expression)DAST.Expression.create_UnOp(
                 UnaryOp.create_Not(),
                 dastExpr,
+                GenType(expr.Type),
                 new UnaryOpFormat_NoFormat()
               ));
               break;
@@ -2767,6 +2772,7 @@ namespace Microsoft.Dafny.Compilers {
               container.Builder.AddExpr((DAST.Expression)DAST.Expression.create_UnOp(
                 UnaryOp.create_BitwiseNot(),
                 dastExpr,
+                GenType(expr.Type),
                 new UnaryOpFormat_NoFormat()
               ));
               break;
@@ -2775,6 +2781,7 @@ namespace Microsoft.Dafny.Compilers {
               container.Builder.AddExpr((DAST.Expression)DAST.Expression.create_UnOp(
                 UnaryOp.create_Cardinality(),
                 dastExpr,
+                GenType(expr.Type),
                 new UnaryOpFormat_NoFormat()
               ));
               break;
@@ -2786,10 +2793,11 @@ namespace Microsoft.Dafny.Compilers {
     }
 
     // A few helpers to reduce the size of expressions
-    private static DAST.Expression Not(_IExpression expr, bool mergeInner = true) {
+    private static DAST.Expression Not(_IExpression expr, _IType exprType, bool mergeInner = true) {
       return (DAST.Expression)DAST.Expression.create_UnOp(
         new UnaryOp_Not(),
         (DAST.Expression)expr,
+        (DAST.Type)exprType,
         mergeInner ? new UnaryOpFormat_CombineFormat() : new UnaryOpFormat_NoFormat());
     }
 
@@ -2907,15 +2915,15 @@ namespace Microsoft.Dafny.Compilers {
             Not(BinaryOp(
               TypeOp(BinOp.create_Eq(
                 e0Type.IsRefType
-              )), left, right))),
+              )), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.SetNeq => C((left, right) =>
-            Not(BinaryOp(TypeOp(BinOp.create_Eq(false)), left, right))),
+            Not(BinaryOp(TypeOp(BinOp.create_Eq(false)), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.SeqNeq => C((left, right) =>
-            Not(BinaryOp(TypeOp(BinOp.create_Eq(false)), left, right))),
+            Not(BinaryOp(TypeOp(BinOp.create_Eq(false)), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.MapNeq => C((left, right) =>
-            Not(BinaryOp(TypeOp(BinOp.create_Eq(false)), left, right))),
+            Not(BinaryOp(TypeOp(BinOp.create_Eq(false)), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.MultiSetNeq => C((left, right) =>
-            Not(BinaryOp(TypeOp(BinOp.create_Eq(false)), left, right))),
+            Not(BinaryOp(TypeOp(BinOp.create_Eq(false)), left, right), typeResult)),
 
           BinaryExpr.ResolvedOpcode.Div =>
             B(NeedsEuclideanDivision(resultType) ? BinOp.create_EuclidianDiv() : BinOp.create_Div(overflows)),
@@ -2925,7 +2933,7 @@ namespace Microsoft.Dafny.Compilers {
             C((left, right) =>
               BinaryOp(
                 TypeOp(DAST.BinOp.create_Or()),
-                Not(left, false), right, new BinaryOpFormat_ImpliesFormat()
+                Not(left, typeLeft, false), right, new BinaryOpFormat_ImpliesFormat()
               )),
           BinaryExpr.ResolvedOpcode.Iff =>
             C((left, right) =>
@@ -2993,16 +3001,16 @@ namespace Microsoft.Dafny.Compilers {
 
           BinaryExpr.ResolvedOpcode.NotInMap =>
             C((left, right) =>
-              Not(BinaryOp(TypeOp(new BinOp_In()), left, right))),
+              Not(BinaryOp(TypeOp(new BinOp_In()), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.NotInSet =>
             C((left, right) =>
-              Not(BinaryOp(TypeOp(new BinOp_In()), left, right))),
+              Not(BinaryOp(TypeOp(new BinOp_In()), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.NotInSeq =>
             C((left, right) =>
-              Not(BinaryOp(TypeOp(new BinOp_In()), left, right))),
+              Not(BinaryOp(TypeOp(new BinOp_In()), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.NotInMultiSet =>
             C((left, right) =>
-              Not(BinaryOp(TypeOp(new BinOp_In()), left, right))),
+              Not(BinaryOp(TypeOp(new BinOp_In()), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.Concat => B(BinOp.create_Concat()),
           BinaryExpr.ResolvedOpcode.And => B(BinOp.create_And()),
           BinaryExpr.ResolvedOpcode.Or => B(BinOp.create_Or()),
@@ -3021,11 +3029,11 @@ namespace Microsoft.Dafny.Compilers {
           BinaryExpr.ResolvedOpcode.Le =>
             C((left, right) =>
               Not(BinaryOp(TypeOpRev(new BinOp_Lt()), right, left,
-                new BinaryOpFormat_ReverseFormat()))),
+                new BinaryOpFormat_ReverseFormat()), typeResult)),
           BinaryExpr.ResolvedOpcode.LeChar =>
             C((left, right) =>
               Not(BinaryOp(TypeOpRev(new BinOp_LtChar()), right, left,
-                new BinaryOpFormat_ReverseFormat()))),
+                new BinaryOpFormat_ReverseFormat()), typeResult)),
           BinaryExpr.ResolvedOpcode.Gt =>
             C((left, right) =>
               BinaryOp(TypeOpRev(new BinOp_Lt()), right, left, new BinaryOpFormat_ReverseFormat())),
@@ -3034,10 +3042,10 @@ namespace Microsoft.Dafny.Compilers {
               BinaryOp(TypeOpRev(new BinOp_LtChar()), right, left, new BinaryOpFormat_ReverseFormat())),
           BinaryExpr.ResolvedOpcode.Ge =>
             C((left, right) =>
-              Not(BinaryOp(TypeOp(new BinOp_Lt()), left, right))),
+              Not(BinaryOp(TypeOp(new BinOp_Lt()), left, right), typeResult)),
           BinaryExpr.ResolvedOpcode.GeChar =>
             C((left, right) =>
-              Not(BinaryOp(TypeOp(new BinOp_LtChar()), left, right))),
+              Not(BinaryOp(TypeOp(new BinOp_LtChar()), left, right), typeResult)),
 
           _ => B(DAST.BinOp.create_Passthrough(Sequence<Rune>.UnicodeFromString($"<b>Unsupported: <i>Operator {op}</i></b>"))),
         };
@@ -3319,7 +3327,9 @@ namespace Microsoft.Dafny.Compilers {
                   TypedBinOp.create_TypedBinOp(DAST.BinOp.create_Eq(true), tmpVarType, tmpVarType, boolType),
                   DAST.Expression.create_Ident(Sequence<Rune>.UnicodeFromString(tmpVarName)),
                   DAST.Expression.create_Literal(DAST.Literal.create_Null(GenType(boundVarType))),
-                  new BinaryOpFormat_NoFormat()), new UnaryOpFormat_CombineFormat());
+                  new BinaryOpFormat_NoFormat()),
+                  boolType,
+                  new UnaryOpFormat_CombineFormat());
               builder.Builder.AddExpr((DAST.Expression)DAST.Expression.create_BinOp(
                 TypedBinOp.create_TypedBinOp(BinOp.create_And(), boolType, boolType, boolType),
                   tmpVarNotNull,
