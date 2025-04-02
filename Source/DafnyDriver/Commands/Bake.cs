@@ -1,10 +1,16 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
+using System.Numerics;
 using System.Text;
 
 namespace Microsoft.Dafny.Compilers {
   public class Bake {
+
+    // TODO? Use NormalizeExpand() on types?
+    // TODO? When we start to consider ghost code, make sure to
+    //   account for that
 
     public static string ProgramToString(Program program) {
       var compileModules = program.CompileModules;
@@ -59,7 +65,7 @@ namespace Microsoft.Dafny.Compilers {
           EscapeAndQuote(name),
           ListToString(FormalToString, ins),
           ListToString(FormalToString, outs),
-          BlockStmtToString(body)
+          StatementToString(body)
         ]);
       } else {
         throw UnsupportedError(member);
@@ -67,20 +73,212 @@ namespace Microsoft.Dafny.Compilers {
     }
 
     public static string FormalToString(Formal formal) {
-      throw UnsupportedError(formal);
-    }
-
-    public static string BlockStmtToString(BlockStmt blockStmt) {
-      var body = blockStmt.Body;
+      var name = formal.Name;
+      var type = formal.Type;
 
       return StringListToString([
-        "BlockStmt",
-        ListToString(StatementToString, body)
+        "Formal",
+        EscapeAndQuote(name),
+        TypeToString(type)
       ]);
     }
 
+    public static string TypeToString(Type type) {
+      if (type is IntType) {
+        return StringListToString([
+          "Type",
+          "IntType"
+        ]);
+      } else {
+        throw UnsupportedError(type);
+      }
+    }
+
     public static string StatementToString(Statement statement) {
-      throw UnsupportedError(statement);
+      if (statement is AssignStatement assignStatement) {
+        var lhss = assignStatement.Lhss;
+        var rhss = assignStatement.Rhss;
+
+        return StringListToString([
+          ListToString(ExpressionToString, lhss),
+          ListToString(AssignmentRhsToString, rhss)
+        ]);
+      } else if (statement is IfStmt ifStmt) {
+        var guard = ifStmt.Guard;
+        var thn = ifStmt.Thn;
+        var els = ifStmt.Els;
+
+        return StringListToString([
+          "IfStmt",
+          ExpressionToString(guard),
+          StatementToString(thn),
+          StatementToString(els)
+        ]);
+      } else if (statement is VarDeclStmt varDeclStmt) {
+        var locals = varDeclStmt.Locals;
+        var assign = varDeclStmt.Assign;
+
+        return StringListToString([
+          "VarDeclStmt",
+          ListToString(LocalVariableToString, locals),
+          StatementToString(assign)
+        ]);
+      } else if (statement is WhileStmt whileStmt) {
+        var guard = whileStmt.Guard;
+        var body = whileStmt.Body;
+
+        return StringListToString([
+          "WhileStmt",
+          ExpressionToString(guard),
+          StatementToString(body)
+        ]);
+      } else if (statement is BlockStmt blockStmt) {
+        var body = blockStmt.Body;
+
+        return StringListToString([
+          "BlockStmt",
+          ListToString(StatementToString, body)
+        ]);
+      } else if (statement is PrintStmt printStmt) {
+        var args = printStmt.Args;
+
+        return StringListToString([
+          "PrintStmt",
+          ListToString(ExpressionToString, args)
+        ]);
+
+      } else {
+        throw UnsupportedError(statement);
+      }
+    }
+
+    public static string ExpressionToString(Expression expression) {
+      // TODO Find out whether resolving like this makes sense
+      if (expression.WasResolved()) {
+        expression = expression.Resolved;
+      }
+
+      // Somewhat based on CloneExpr in ExtremeLemmaBodyCloner.cs
+      if (expression is ApplySuffix applySuffix) {
+        // Hopefully applySuffix.Lhs was resolved - otherwise, the
+        // Contract will fail...
+        var lhsResolved = applySuffix.Lhs.Resolved;
+
+        // The invariant Args isn't null? A lie.
+        // FilledInDuringResolution? A lie.
+        var args = applySuffix.Bindings.ArgumentBindings.
+          Select(b => b.Actual.Resolved);
+
+        return StringListToString([
+          // TODO Find out whether this is essentially always
+          //   something like "MethodCallExpr"
+          "ApplySuffix",
+          ExpressionToString(lhsResolved),
+          ListToString(ExpressionToString, args)
+        ]);
+      } else if (expression is IdentifierExpr identifierExpr) {
+        var name = identifierExpr.Name;
+        var type = identifierExpr.Type;
+
+        return StringListToString([
+          "IdentifierExpr",
+          EscapeAndQuote(name),
+          TypeToString(type)
+        ]);
+      } else if (expression is BinaryExpr binaryExpr) {
+        var rop = binaryExpr.ResolvedOp;
+        var e0 = binaryExpr.E0;
+        var e1 = binaryExpr.E1;
+
+        return StringListToString([
+          "BinaryExpr",
+          ResolvedOpcodeToString(rop),
+          ExpressionToString(e0),
+          ExpressionToString(e1)
+        ]);
+      } else if (expression is LiteralExpr literalExpr) {
+        string valueAsString;
+
+        var value = literalExpr.Value;
+        if (expression is StringLiteralExpr stringLiteralExpr) {
+          var isVerbatim = stringLiteralExpr.IsVerbatim;
+
+          valueAsString = StringListToString([
+            "StringLiteral",
+            isVerbatim.ToString(),
+            EscapeAndQuote((string)value)
+          ]);
+        } else if (value is null) {
+          valueAsString = StringListToString(["Null"]);
+        } else if (value is BigInteger bigInteger) {
+          valueAsString = StringListToString([
+            "BigInteger",
+            bigInteger.ToString()
+          ]);
+        } else {
+          throw UnsupportedError(literalExpr);
+        }
+
+        return StringListToString([
+          "LiteralExpr",
+          valueAsString
+        ]);
+      } else if (expression is MemberSelectExpr memberSelectExpr) {
+        var obj = memberSelectExpr.Obj;
+        var memberName = memberSelectExpr.MemberName;
+
+        return StringListToString([
+          "MemberSelectExpr",
+          ExpressionToString(obj),
+          EscapeAndQuote(memberName)
+        ]);
+
+      } else {
+        throw UnsupportedError(expression);
+      }
+    }
+
+    public static string ActualBindingToString(ActualBinding actualBinding) {
+      var actual = actualBinding.Actual;
+
+      return StringListToString([
+        "ActualBinding",
+        ExpressionToString(actual)
+      ]);
+    }
+
+    public static string LocalVariableToString(LocalVariable localVariable) {
+      var name = localVariable.Name;
+      var type = localVariable.Type;
+
+      return StringListToString([
+        "LocalVariable",
+        EscapeAndQuote(name),
+        TypeToString(type)
+      ]);
+    }
+
+    public static string ResolvedOpcodeToString(BinaryExpr.ResolvedOpcode rop) =>
+      rop switch {
+        BinaryExpr.ResolvedOpcode.Lt => StringListToString(["Lt"]),
+        BinaryExpr.ResolvedOpcode.EqCommon => StringListToString(["EqCommon"]),
+        BinaryExpr.ResolvedOpcode.NeqCommon => StringListToString(["NeqCommon"]),
+        BinaryExpr.ResolvedOpcode.Sub => StringListToString(["Sub"]),
+        BinaryExpr.ResolvedOpcode.Add => StringListToString(["Add"]),
+        _ => throw UnsupportedError(rop)
+      };
+
+    public static string AssignmentRhsToString(AssignmentRhs assignmentRhs) {
+      if (assignmentRhs is ExprRhs exprRhs) {
+        var expr = exprRhs.Expr;
+
+        return StringListToString([
+          "ExprRhs",
+          ExpressionToString(expr)
+        ]);
+      } else {
+        throw UnsupportedError(assignmentRhs);
+      }
     }
 
     public static string StringListToString(IEnumerable<string> xs) {
@@ -110,7 +308,7 @@ namespace Microsoft.Dafny.Compilers {
       var typeName = obj.GetType().Name;
       var startToken = (obj is INode) ? ((INode)obj).StartToken : Token.NoToken;
 
-      return new ExtractorError(startToken, $"Unsupported {typeName}: {obj}");
+      return new ExtractorError(startToken, $"Unsupported {typeName}: {obj}\n{Environment.StackTrace}");
     }
   }
 }
