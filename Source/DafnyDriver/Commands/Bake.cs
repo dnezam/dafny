@@ -1,6 +1,5 @@
 using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -236,15 +235,6 @@ namespace Microsoft.Dafny.Compilers {
       } else {
         throw UnsupportedError(expression);
       }
-    }
-
-    public static string ActualBindingToString(ActualBinding actualBinding) {
-      var actual = actualBinding.Actual;
-
-      return StringListToString([
-        "ActualBinding",
-        ExpressionToString(actual)
-      ]);
     }
 
     public static string LocalVariableToString(LocalVariable localVariable) {
