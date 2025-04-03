@@ -157,6 +157,13 @@ namespace Microsoft.Dafny.Compilers {
           ListToString(ExpressionToString, args)
         ]);
 
+      } else if (statement is ReturnStmt returnStmt) {
+        var rhss = returnStmt.Rhss;
+
+        return StringListToString([
+          "ReturnStmt",
+          NullableToString(x => ListToString(AssignmentRhsToString, x), rhss)
+        ]);
       } else {
         throw UnsupportedError(statement);
       }
@@ -294,6 +301,7 @@ namespace Microsoft.Dafny.Compilers {
         BinaryExpr.ResolvedOpcode.NeqCommon => StringListToString(["NeqCommon"]),
         BinaryExpr.ResolvedOpcode.Sub => StringListToString(["Sub"]),
         BinaryExpr.ResolvedOpcode.Add => StringListToString(["Add"]),
+        BinaryExpr.ResolvedOpcode.Div => StringListToString(["Div"]),
         _ => throw UnsupportedError(rop)
       };
 
