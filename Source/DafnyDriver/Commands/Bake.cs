@@ -174,27 +174,23 @@ namespace Microsoft.Dafny.Compilers {
     }
 
     public static string StatementListToString(List<Statement> stmts) =>
-      StatementListToStringAux(Enumerable.Reverse(stmts).ToList());
-
-    public static string StatementListToStringAux(List<Statement> stmts) =>
       stmts switch {
         [] => StringListToString(["Skip"]),
-        [var stmtA] => StatementToString(stmtA),
-        [var stmtB, var stmtA] =>
+        [var stmt] => StatementToString(stmt),
+        [VarDeclStmt varDecl, .. var rest] =>
           StringListToString([
-            "Then", StatementToString(stmtA), StatementToString(stmtB)
-          ]),
-        [var stmtC, var stmtB, .. var init] =>
+            "VarDeclStmt",
+            ListToString(LocalVariableToString, varDecl.Locals),
+            NullableToString(StatementToString, varDecl.Assign),
+            StatementListToString(rest)
+        ]),
+        [var stmt, .. var rest] =>
           StringListToString([
             "Then",
-            StatementListToStringAux(init),
-            StringListToString([
-              "Then",
-              StatementToString(stmtB),
-              StatementToString(stmtC)
-            ])
+            StatementToString(stmt),
+            StatementListToString(rest)
           ])
-        };
+      };
 
     public static string ExpressionToString(Expression expression) {
       // TODO Find out whether resolving like this makes sense
