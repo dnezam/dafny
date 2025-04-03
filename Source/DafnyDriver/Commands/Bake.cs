@@ -64,7 +64,7 @@ namespace Microsoft.Dafny.Compilers {
           EscapeAndQuote(name),
           ListToString(FormalToString, ins),
           ListToString(FormalToString, outs),
-          BlockStmtToString(body)
+          StatementListToString(body.Body)
         ]);
       } else if (member is Function function) {
         var name = function.Name;
@@ -82,15 +82,6 @@ namespace Microsoft.Dafny.Compilers {
       } else {
         throw UnsupportedError(member);
       }
-    }
-
-    public static string BlockStmtToString(BlockStmt blockStmt) {
-      var body = blockStmt.Body;
-
-      return StringListToString([
-        "BlockStmt",
-        ListToString(StatementToString, body)
-      ]);
     }
 
     public static string FormalToString(Formal formal) {
@@ -139,7 +130,7 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "IfStmt",
           ExpressionToString(guard),
-          BlockStmtToString(thn),
+          StatementListToString(thn.Body),
           NullableToString(StatementToString, els)
         ]);
       } else if (statement is VarDeclStmt varDeclStmt) {
@@ -158,16 +149,10 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "WhileStmt",
           ExpressionToString(guard),
-          BlockStmtToString(body)
+          StatementListToString(body.Body)
         ]);
       } else if (statement is BlockStmt blockStmt) {
-        var block = BlockStmtToString(blockStmt);
-
-        return StringListToString([
-          "Statement_BlockStatement",
-          block
-        ]);
-
+        return StatementListToString(blockStmt.Body);
       } else if (statement is PrintStmt printStmt) {
         var args = printStmt.Args;
 
@@ -187,6 +172,29 @@ namespace Microsoft.Dafny.Compilers {
         throw UnsupportedError(statement);
       }
     }
+
+    public static string StatementListToString(List<Statement> stmts) =>
+      StatementListToStringAux(Enumerable.Reverse(stmts).ToList());
+
+    public static string StatementListToStringAux(List<Statement> stmts) =>
+      stmts switch {
+        [] => StringListToString(["Skip"]),
+        [var stmtA] => StatementToString(stmtA),
+        [var stmtB, var stmtA] =>
+          StringListToString([
+            "Then", StatementToString(stmtA), StatementToString(stmtB)
+          ]),
+        [var stmtC, var stmtB, .. var init] =>
+          StringListToString([
+            "Then",
+            StatementListToStringAux(init),
+            StringListToString([
+              "Then",
+              StatementToString(stmtB),
+              StatementToString(stmtC)
+            ])
+          ])
+        };
 
     public static string ExpressionToString(Expression expression) {
       // TODO Find out whether resolving like this makes sense
