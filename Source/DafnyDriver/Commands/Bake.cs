@@ -94,6 +94,13 @@ namespace Microsoft.Dafny.Compilers {
     public static string TypeToString(Type type) {
       if (type is IntType) {
         return StringListToString(["IntType"]);
+      } else if (type is UserDefinedType userDefinedType) {
+        var name = userDefinedType.Name;
+
+        return StringListToString([
+          "UserDefinedType",
+          EscapeAndQuote(name)
+        ]);
       } else {
         throw UnsupportedError(type);
       }
@@ -114,7 +121,7 @@ namespace Microsoft.Dafny.Compilers {
           "IfStmt",
           ExpressionToString(guard),
           BlockStmtToString(thn),
-          StatementToString(els)
+          NullableToString(StatementToString, els)
         ]);
       } else if (statement is VarDeclStmt varDeclStmt) {
         var locals = varDeclStmt.Locals;
@@ -251,6 +258,19 @@ namespace Microsoft.Dafny.Compilers {
           EscapeAndQuote(memberName)
         ]);
 
+      } else if (expression is SeqSelectExpr seqSelectExpr) {
+        var selectOne = seqSelectExpr.SelectOne;
+        var seq = seqSelectExpr.Seq;
+        var e0 = seqSelectExpr.E0;
+        var e1 = seqSelectExpr.E1;
+
+        return StringListToString([
+          "SeqSelectExpr",
+          selectOne.ToString(),
+          ExpressionToString(seq),
+          ExpressionToString(e0),
+          NullableToString(ExpressionToString, e1)
+        ]);
       } else {
         throw UnsupportedError(expression);
       }
@@ -285,8 +305,32 @@ namespace Microsoft.Dafny.Compilers {
           "ExprRhs",
           ExpressionToString(expr)
         ]);
+      } else if (assignmentRhs is AllocateArray allocateArray) {
+        var explicitType = allocateArray.ExplicitType;
+        var arrayDimensions = allocateArray.ArrayDimensions;
+        var elementInit = allocateArray.ElementInit;
+        var initDisplay = allocateArray.InitDisplay;
+
+        return StringListToString([
+          "AllocateArray",
+          TypeToString(explicitType),
+          ListToString(ExpressionToString, arrayDimensions),
+          NullableToString(ExpressionToString, elementInit),
+          NullableToString(x => ListToString(ExpressionToString, x), initDisplay)
+        ]);
       } else {
         throw UnsupportedError(assignmentRhs);
+      }
+    }
+
+    public static string NullableToString<T>(Func<T, string> f, T t) {
+      if (t is null) {
+        return StringListToString(["None"]);
+      } else {
+        return StringListToString([
+          "Some",
+          f(t)
+        ]);
       }
     }
 
