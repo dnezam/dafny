@@ -131,7 +131,7 @@ namespace Microsoft.Dafny.Compilers {
           "IfStmt",
           ExpressionToString(guard),
           StatementListToString(thn.Body),
-          NullableToString(StatementToString, els)
+          NullableStatementToString(els)
         ]);
       } else if (statement is VarDeclStmt varDeclStmt) {
         var locals = varDeclStmt.Locals;
@@ -140,7 +140,7 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "VarDeclStmt",
           ListToString(LocalVariableToString, locals),
-          NullableToString(StatementToString, assign)
+          NullableStatementToString(assign)
         ]);
       } else if (statement is WhileStmt whileStmt) {
         var guard = whileStmt.Guard;
@@ -181,7 +181,7 @@ namespace Microsoft.Dafny.Compilers {
           StringListToString([
             "VarDeclStmt",
             ListToString(LocalVariableToString, varDecl.Locals),
-            NullableToString(StatementToString, varDecl.Assign),
+            NullableStatementToString(varDecl.Assign),
             StatementListToString(rest)
         ]),
         [var stmt, .. var rest] =>
@@ -369,6 +369,14 @@ namespace Microsoft.Dafny.Compilers {
         ]);
       } else {
         throw UnsupportedError(assignmentRhs);
+      }
+    }
+
+    public static string NullableStatementToString(Statement stmt) {
+      if (stmt is null) {
+        return StringListToString(["Skip"]);
+      } else {
+        return StatementToString(stmt);
       }
     }
 
