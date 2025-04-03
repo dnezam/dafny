@@ -64,11 +64,20 @@ namespace Microsoft.Dafny.Compilers {
           EscapeAndQuote(name),
           ListToString(FormalToString, ins),
           ListToString(FormalToString, outs),
-          StatementToString(body)
+          BlockStmtToString(body)
         ]);
       } else {
         throw UnsupportedError(member);
       }
+    }
+
+    public static string BlockStmtToString(BlockStmt blockStmt) {
+      var body = blockStmt.Body;
+
+      return StringListToString([
+        "BlockStmt",
+        ListToString(StatementToString, body)
+      ]);
     }
 
     public static string FormalToString(Formal formal) {
@@ -84,23 +93,17 @@ namespace Microsoft.Dafny.Compilers {
 
     public static string TypeToString(Type type) {
       if (type is IntType) {
-        return StringListToString([
-          "Type",
-          "IntType"
-        ]);
+        return StringListToString(["IntType"]);
       } else {
         throw UnsupportedError(type);
       }
     }
 
     public static string StatementToString(Statement statement) {
-      if (statement is AssignStatement assignStatement) {
-        var lhss = assignStatement.Lhss;
-        var rhss = assignStatement.Rhss;
-
+      if (statement is ConcreteAssignStatement concreteAssignStatement) {
         return StringListToString([
-          ListToString(ExpressionToString, lhss),
-          ListToString(AssignmentRhsToString, rhss)
+          "Statement_ConcreteAssignStatement",
+          ConcreteAssignStatementToString(concreteAssignStatement)
         ]);
       } else if (statement is IfStmt ifStmt) {
         var guard = ifStmt.Guard;
@@ -110,7 +113,7 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "IfStmt",
           ExpressionToString(guard),
-          StatementToString(thn),
+          BlockStmtToString(thn),
           StatementToString(els)
         ]);
       } else if (statement is VarDeclStmt varDeclStmt) {
@@ -120,7 +123,7 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "VarDeclStmt",
           ListToString(LocalVariableToString, locals),
-          StatementToString(assign)
+          ConcreteAssignStatementToString(assign)
         ]);
       } else if (statement is WhileStmt whileStmt) {
         var guard = whileStmt.Guard;
@@ -129,15 +132,16 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "WhileStmt",
           ExpressionToString(guard),
-          StatementToString(body)
+          BlockStmtToString(body)
         ]);
       } else if (statement is BlockStmt blockStmt) {
-        var body = blockStmt.Body;
+        var block = BlockStmtToString(blockStmt);
 
         return StringListToString([
-          "BlockStmt",
-          ListToString(StatementToString, body)
+          "Statement_BlockStatement",
+          block
         ]);
+
       } else if (statement is PrintStmt printStmt) {
         var args = printStmt.Args;
 
@@ -148,6 +152,21 @@ namespace Microsoft.Dafny.Compilers {
 
       } else {
         throw UnsupportedError(statement);
+      }
+    }
+
+    public static string ConcreteAssignStatementToString(ConcreteAssignStatement concreteAssignStatement) {
+      if (concreteAssignStatement is AssignStatement assignStatement) {
+        var lhss = assignStatement.Lhss;
+        var rhss = assignStatement.Rhss;
+
+        return StringListToString([
+          "AssignStatement",
+          ListToString(ExpressionToString, lhss),
+          ListToString(AssignmentRhsToString, rhss)
+        ]);
+      } else {
+        throw UnsupportedError(concreteAssignStatement);
       }
     }
 
