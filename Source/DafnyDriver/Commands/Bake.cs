@@ -66,6 +66,19 @@ namespace Microsoft.Dafny.Compilers {
           ListToString(FormalToString, outs),
           BlockStmtToString(body)
         ]);
+      } else if (member is Function function) {
+        var name = function.Name;
+        var ins = function.Ins;
+        var resultType = function.ResultType;
+        var body = function.Body;
+
+        return StringListToString([
+          "Function",
+          EscapeAndQuote(name),
+          ListToString(FormalToString, ins),
+          TypeToString(resultType),
+          ExpressionToString(body)
+        ]);
       } else {
         throw UnsupportedError(member);
       }
@@ -94,6 +107,8 @@ namespace Microsoft.Dafny.Compilers {
     public static string TypeToString(Type type) {
       if (type is IntType) {
         return StringListToString(["IntType"]);
+      } else if (type is BoolType) {
+        return StringListToString(["BoolType"]);
       } else if (type is UserDefinedType userDefinedType) {
         var name = userDefinedType.Name;
 
@@ -130,7 +145,7 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "VarDeclStmt",
           ListToString(LocalVariableToString, locals),
-          ConcreteAssignStatementToString(assign)
+          NullableToString(ConcreteAssignStatementToString, assign)
         ]);
       } else if (statement is WhileStmt whileStmt) {
         var guard = whileStmt.Guard;
@@ -247,6 +262,16 @@ namespace Microsoft.Dafny.Compilers {
             "BigInteger",
             bigInteger.ToString()
           ]);
+        } else if (LiteralExpr.IsTrue(literalExpr)) {
+          valueAsString = StringListToString([
+            "BoolV",
+            "True"
+          ]);
+        } else if (LiteralExpr.IsFalse(literalExpr)) {
+          valueAsString = StringListToString([
+           "BoolV",
+            "False"
+         ]);
         } else {
           throw UnsupportedError(literalExpr);
         }
@@ -277,6 +302,29 @@ namespace Microsoft.Dafny.Compilers {
           ExpressionToString(seq),
           ExpressionToString(e0),
           NullableToString(ExpressionToString, e1)
+        ]);
+      } else if (expression is ITEExpr iteeExpr) {
+        var test = iteeExpr.Test;
+        var thn = iteeExpr.Thn;
+        var els = iteeExpr.Els;
+
+        return StringListToString([
+          "ITEExpr",
+          ExpressionToString(test),
+          ExpressionToString(thn),
+          ExpressionToString(els)
+        ]);
+
+      } else if (expression is FunctionCallExpr functionCallExpr) {
+        var name = functionCallExpr.Name;
+        var receiver = functionCallExpr.Receiver;
+        var args = functionCallExpr.Args;
+
+        return StringListToString([
+          "FunctionCallExpr",
+          EscapeAndQuote(name),
+          ExpressionToString(receiver),
+          ListToString(ExpressionToString, args)
         ]);
       } else {
         throw UnsupportedError(expression);
