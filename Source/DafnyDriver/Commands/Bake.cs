@@ -18,42 +18,28 @@ namespace Microsoft.Dafny.Compilers {
     public static string ProgramToString(Program program) {
       var compileModules = program.CompileModules;
 
+      // For now, we only consider programs with a single module besides
+      // the system module
+      if (compileModules.Count() != 2) {
+        throw UnsupportedError(compileModules);
+      }
+      if (!compileModules.First().Name.Equals("_System")) {
+        throw UnsupportedError(compileModules.First());
+      }
+
+      // The single module we consider should only have a DefaultClassDecl
+      var topLevelDecls = compileModules.ElementAt(1).TopLevelDecls;
+      if (topLevelDecls.Count() != 1) {
+        throw UnsupportedError(topLevelDecls);
+      }
+      var defaultClassDecl = (DefaultClassDecl)topLevelDecls.First();
+      var members = defaultClassDecl.Members;
+
+
       return StringListToString([
         "Program",
-        ListToString(ModuleDefinitionToString, compileModules)
-        // TODO Add name of main method?
+        ListToString(MemberDeclToString, members)
       ]);
-    }
-
-    public static string ModuleDefinitionToString(ModuleDefinition m) {
-      var name = m.Name;
-      var topLevelDecls = m.TopLevelDecls;
-
-      if (name.Equals("_System")) {
-        // NOTE Ignore system module for now
-        return "";
-      } else {
-        return StringListToString([
-          "Module",
-          EscapeAndQuote(name),
-          ListToString(TopLevelDeclToString, topLevelDecls)
-        ]);
-      }
-    }
-
-    public static string TopLevelDeclToString(TopLevelDecl decl) {
-      if (decl is DefaultClassDecl defaultClassDecl) {
-        var name = defaultClassDecl.Name;
-        var members = defaultClassDecl.Members;
-
-        return StringListToString([
-          "DefaultClassDecl",
-          EscapeAndQuote(name),
-          ListToString(MemberDeclToString, members)
-        ]);
-      } else {
-        throw UnsupportedError(decl);
-      }
     }
 
     public static string MemberDeclToString(MemberDecl member) {
