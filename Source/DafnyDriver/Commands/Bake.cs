@@ -91,9 +91,9 @@ namespace Microsoft.Dafny.Compilers {
       }
 
       if (type is IntType) {
-        return StringListToString(["IntType"]);
+        return StringListToString(["IntT"]);
       } else if (type is BoolType) {
-        return StringListToString(["BoolType"]);
+        return StringListToString(["BoolT"]);
       } else if (type.IsArrayType) {
         var arrayType = type.AsArrayType;
         if (arrayType.Dims != 1) {
@@ -104,7 +104,7 @@ namespace Microsoft.Dafny.Compilers {
         Contract.Assert(type.TypeArgs.Count == 1);
 
         return StringListToString([
-          "ArrayType",
+          "ArrayT",
           TypeToString(type.TypeArgs[0])
         ]);
       } else {
@@ -120,14 +120,13 @@ namespace Microsoft.Dafny.Compilers {
       }
     }
 
-
     public static string StatementToString(Statement statement) {
       if (statement is AssignStatement assignStatement) {
         var lhss = assignStatement.Lhss;
         var rhss = assignStatement.Rhss;
 
         return StringListToString([
-          "AssignStatement",
+          "Assign",
           ListToString(ExpressionToString, lhss),
           ListToString(AssignmentRhsToString, rhss)
         ]);
@@ -137,7 +136,7 @@ namespace Microsoft.Dafny.Compilers {
         var els = ifStmt.Els;
 
         return StringListToString([
-          "IfStmt",
+          "If",
           ExpressionToString(guard),
           StatementListToString(thn.Body),
           NullableStatementToString(els)
@@ -147,7 +146,7 @@ namespace Microsoft.Dafny.Compilers {
         var assign = varDeclStmt.Assign;
 
         return StringListToString([
-          "VarDeclStmt",
+          "VarDecl",
           ListToString(LocalVariableToString, locals),
           NullableStatementToString(assign)
         ]);
@@ -156,7 +155,7 @@ namespace Microsoft.Dafny.Compilers {
         var body = whileStmt.Body;
 
         return StringListToString([
-          "WhileStmt",
+          "While",
           ExpressionToString(guard),
           StatementListToString(body.Body)
         ]);
@@ -166,7 +165,7 @@ namespace Microsoft.Dafny.Compilers {
         var args = printStmt.Args;
 
         return StringListToString([
-          "PrintStmt",
+          "Print",
           ListToString(ExpressionToString, args)
         ]);
 
@@ -174,7 +173,7 @@ namespace Microsoft.Dafny.Compilers {
         var rhss = returnStmt.Rhss;
 
         return StringListToString([
-          "ReturnStmt",
+          "Return",
           NullableToString(x => ListToString(AssignmentRhsToString, x), rhss)
         ]);
       } else {
@@ -188,7 +187,7 @@ namespace Microsoft.Dafny.Compilers {
         [var stmt] => StatementToString(stmt),
         [VarDeclStmt varDecl, .. var rest] =>
           StringListToString([
-            "VarDeclStmt",
+            "VarDecl",
             ListToString(LocalVariableToString, varDecl.Locals),
             NullableStatementToString(varDecl.Assign),
             StatementListToString(rest)
@@ -231,7 +230,7 @@ namespace Microsoft.Dafny.Compilers {
         var type = identifierExpr.Type;
 
         return StringListToString([
-          "IdentifierExpr",
+          "IdentifierExp",
           EscapeAndQuote(name),
           TypeToString(type)
         ]);
@@ -241,7 +240,7 @@ namespace Microsoft.Dafny.Compilers {
         var e1 = binaryExpr.E1;
 
         return StringListToString([
-          "BinaryExpr",
+          "BinaryExp",
           ResolvedOpcodeToString(rop),
           ExpressionToString(e0),
           ExpressionToString(e1)
@@ -254,7 +253,7 @@ namespace Microsoft.Dafny.Compilers {
           var isVerbatim = stringLiteralExpr.IsVerbatim;
 
           valueAsString = StringListToString([
-            "StringLiteral",
+            "StringV",
             isVerbatim.ToString(),
             EscapeAndQuote((string)value)
           ]);
@@ -262,11 +261,9 @@ namespace Microsoft.Dafny.Compilers {
           // We do not support receivers, so reaching the point
           // probably means we have an unnecessary field somewhere.
           throw UnsupportedError(expression);
-        } else if (value is null) {
-          valueAsString = StringListToString(["Null"]);
         } else if (value is BigInteger bigInteger) {
           valueAsString = StringListToString([
-            "BigInteger",
+            "IntV",
             bigInteger.ToString()
           ]);
         } else if (LiteralExpr.IsTrue(literalExpr)) {
@@ -276,7 +273,7 @@ namespace Microsoft.Dafny.Compilers {
           ]);
         } else if (LiteralExpr.IsFalse(literalExpr)) {
           valueAsString = StringListToString([
-           "BoolV",
+            "BoolV",
             "False"
          ]);
         } else {
@@ -284,7 +281,7 @@ namespace Microsoft.Dafny.Compilers {
         }
 
         return StringListToString([
-          "LiteralExpr",
+          "LiteralExp",
           valueAsString
         ]);
       } else if (expression is SeqSelectExpr seqSelectExpr) {
@@ -309,7 +306,7 @@ namespace Microsoft.Dafny.Compilers {
         var els = iteeExpr.Els;
 
         return StringListToString([
-          "ITEExpr",
+          "ITE",
           ExpressionToString(test),
           ExpressionToString(thn),
           ExpressionToString(els)
@@ -355,7 +352,7 @@ namespace Microsoft.Dafny.Compilers {
       var type = localVariable.Type;
 
       return StringListToString([
-        "LocalVariable",
+        "LocalVar",
         EscapeAndQuote(name),
         TypeToString(type)
       ]);
@@ -364,8 +361,8 @@ namespace Microsoft.Dafny.Compilers {
     public static string ResolvedOpcodeToString(BinaryExpr.ResolvedOpcode rop) =>
       rop switch {
         BinaryExpr.ResolvedOpcode.Lt => StringListToString(["Lt"]),
-        BinaryExpr.ResolvedOpcode.EqCommon => StringListToString(["EqCommon"]),
-        BinaryExpr.ResolvedOpcode.NeqCommon => StringListToString(["NeqCommon"]),
+        BinaryExpr.ResolvedOpcode.EqCommon => StringListToString(["Eq"]),
+        BinaryExpr.ResolvedOpcode.NeqCommon => StringListToString(["Neq"]),
         BinaryExpr.ResolvedOpcode.Sub => StringListToString(["Sub"]),
         BinaryExpr.ResolvedOpcode.Add => StringListToString(["Add"]),
         BinaryExpr.ResolvedOpcode.Div => StringListToString(["Div"]),
