@@ -12,8 +12,6 @@ namespace Microsoft.Dafny.Compilers {
     //   actually support gets translated into something similar.
 
     // TODO? Use NormalizeExpand() on types?
-    // TODO? When we start to consider ghost code, make sure to
-    //   account for that
 
     public static string ProgramToString(Program program) {
       var compileModules = program.CompileModules;
@@ -50,7 +48,7 @@ namespace Microsoft.Dafny.Compilers {
     public static string FrameExpSpecToString(Specification<FrameExpression> specs) {
       var expressions = specs.Expressions;
 
-     // Instead of mapping "null" to None, map it to []
+      // Instead of mapping "null" to None, map it to []
       expressions ??= [];
 
       return ListToString(ExpressionToString, expressions.Select(x => x.E));
@@ -249,7 +247,6 @@ namespace Microsoft.Dafny.Compilers {
       };
 
     public static string ExpressionToString(Expression expression) {
-      // TODO Find out whether resolving like this makes sense
       if (expression.WasResolved()) {
         expression = expression.Resolved;
       }
