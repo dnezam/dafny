@@ -399,10 +399,7 @@ namespace Microsoft.Dafny.Compilers {
         var length = arrayDimensions[0];
 
         if (initDisplay is not null) {
-          return StringListToString([
-            "AllocArrayWithDisplay",
-            ListToString(ExpressionToString, initDisplay)
-          ]);
+          throw UnsupportedError(assignmentRhs);
         } else {
           var initValue = elementInit is null ? InitExpr(explicitType) : elementInit;
 
