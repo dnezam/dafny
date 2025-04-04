@@ -7,6 +7,9 @@ using System.Text;
 
 namespace Microsoft.Dafny.Compilers {
   public class Bake {
+    // NOTE We do not consistently throw errors on unsupported
+    //   features, so it is possible that a program we don't
+    //   actually support gets translated into something similar.
 
     // TODO? Use NormalizeExpand() on types?
     // TODO? When we start to consider ghost code, make sure to
