@@ -210,6 +210,13 @@ namespace Microsoft.Dafny.Compilers {
           "Return",
           NullableToString(x => ListToString(AssignmentRhsToString, x), rhss)
         ]);
+      } else if (statement is AssertStmt assertStmt) {
+        var expr = assertStmt.Expr;
+
+        return StringListToString([
+          "Assert",
+          ExpressionToString(expr)
+        ]);
       } else {
         throw UnsupportedError(statement);
       }
