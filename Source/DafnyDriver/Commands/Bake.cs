@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
 using System.Numerics;
 using System.Text;
@@ -200,20 +201,21 @@ namespace Microsoft.Dafny.Compilers {
 
       // Somewhat based on CloneExpr in ExtremeLemmaBodyCloner.cs
       if (expression is ApplySuffix applySuffix) {
-        // Hopefully applySuffix.Lhs was resolved - otherwise, the
-        // Contract will fail...
-        var lhsResolved = applySuffix.Lhs.Resolved;
+        // ApplySuffix was not resolved; that's weird. Seems to be just
+        // a method call, so let's go with that.
 
-        // The invariant Args isn't null? A lie.
-        // FilledInDuringResolution? A lie.
+        // Get method name
+        var mse = (MemberSelectExpr)applySuffix.Lhs.Resolved;
+        Contract.Assert(mse.Member is Method);
+        var name = mse.MemberName;
+
+        // Get arguments
         var args = applySuffix.Bindings.ArgumentBindings.
           Select(b => b.Actual.Resolved);
 
         return StringListToString([
-          // TODO Find out whether this is essentially always
-          //   something like "MethodCallExpr"
-          "ApplySuffix",
-          ExpressionToString(lhsResolved),
+          "MethodCall",
+          EscapeAndQuote(name),
           ListToString(ExpressionToString, args)
         ]);
       } else if (expression is IdentifierExpr identifierExpr) {
@@ -273,16 +275,6 @@ namespace Microsoft.Dafny.Compilers {
           "LiteralExpr",
           valueAsString
         ]);
-      } else if (expression is MemberSelectExpr memberSelectExpr) {
-        var obj = memberSelectExpr.Obj;
-        var memberName = memberSelectExpr.MemberName;
-
-        return StringListToString([
-          "MemberSelectExpr",
-          ExpressionToString(obj),
-          EscapeAndQuote(memberName)
-        ]);
-
       } else if (expression is SeqSelectExpr seqSelectExpr) {
         var selectOne = seqSelectExpr.SelectOne;
         var seq = seqSelectExpr.Seq;
@@ -319,6 +311,20 @@ namespace Microsoft.Dafny.Compilers {
           ExpressionToString(receiver),
           ListToString(ExpressionToString, args)
         ]);
+      } else if (expression is MemberSelectExpr memberSelectExpr) {
+        var obj = memberSelectExpr.Obj.Resolved;
+        var name = memberSelectExpr.MemberName;
+
+        // For now, only support length for one-dimensional arrays
+        var type = obj.Type;
+        if (name == "Length" && type.IsArrayType && type.AsArrayType.Dims == 1) {
+          return StringListToString([
+            "ArrayLen",
+            ExpressionToString(obj)
+          ]);
+        } else {
+          throw UnsupportedError(memberSelectExpr);
+        }
       } else {
         throw UnsupportedError(expression);
       }
