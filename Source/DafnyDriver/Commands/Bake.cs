@@ -105,7 +105,6 @@ namespace Microsoft.Dafny.Compilers {
       var type = formal.Type;
 
       return StringListToString([
-        "Formal",
         EscapeAndQuote(name),
         TypeToString(type)
       ]);
@@ -419,7 +418,6 @@ namespace Microsoft.Dafny.Compilers {
       var type = localVariable.Type;
 
       return StringListToString([
-        "LocalVar",
         EscapeAndQuote(name),
         TypeToString(type)
       ]);
