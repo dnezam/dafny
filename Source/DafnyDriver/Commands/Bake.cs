@@ -47,9 +47,14 @@ namespace Microsoft.Dafny.Compilers {
     public static string AttributedExpressionToString(AttributedExpression attrExp) =>
       ExpressionToString(attrExp.E);
 
-    public static string FrameExpSpecToString(Specification<FrameExpression> specs) =>
-      NullableToString(xs => ListToString(ExpressionToString, xs.Select(x => x.E)),
-        specs.Expressions);
+    public static string FrameExpSpecToString(Specification<FrameExpression> specs) {
+      var expressions = specs.Expressions;
+
+     // Instead of mapping "null" to None, map it to []
+      expressions ??= [];
+
+      return ListToString(ExpressionToString, expressions.Select(x => x.E));
+    }
 
     public static string ExpSpecToString(Specification<Expression> specs) =>
       ListToString(ExpressionToString, specs.Expressions);
@@ -205,9 +210,12 @@ namespace Microsoft.Dafny.Compilers {
       } else if (statement is ReturnStmt returnStmt) {
         var rhss = returnStmt.Rhss;
 
+        // Instead of mapping "null" to None, map it to []
+        rhss ??= [];
+
         return StringListToString([
           "Return",
-          NullableToString(x => ListToString(AssignmentRhsToString, x), rhss)
+          ListToString(AssignmentRhsToString, rhss)
         ]);
       } else if (statement is AssertStmt assertStmt) {
         var expr = assertStmt.Expr;
@@ -486,17 +494,6 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString(["Skip"]);
       } else {
         return StatementToString(stmt);
-      }
-    }
-
-    public static string NullableToString<T>(Func<T, string> f, T t) {
-      if (t is null) {
-        return StringListToString(["None"]);
-      } else {
-        return StringListToString([
-          "Some",
-          f(t)
-        ]);
       }
     }
 
