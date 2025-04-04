@@ -294,13 +294,16 @@ namespace Microsoft.Dafny.Compilers {
         var e0 = seqSelectExpr.E0;
         var e1 = seqSelectExpr.E1;
 
-        return StringListToString([
-          "SeqSelectExpr",
-          selectOne.ToString(),
-          ExpressionToString(seq),
-          ExpressionToString(e0),
-          NullableToString(ExpressionToString, e1)
-        ]);
+        if (selectOne && seq.Type.IsArrayType) {
+          Contract.Assert(e0 != null && e1 == null);
+          return StringListToString([
+            "ArraySelect",
+            ExpressionToString(seq),
+            ExpressionToString(e0)
+          ]);
+        } else {
+          throw UnsupportedError(seqSelectExpr);
+        }
       } else if (expression is ITEExpr iteeExpr) {
         var test = iteeExpr.Test;
         var thn = iteeExpr.Thn;
