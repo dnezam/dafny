@@ -100,16 +100,26 @@ namespace Microsoft.Dafny.Compilers {
     }
 
     public static string TypeToString(Type type) {
+      if (type is TypeProxy typeProxy) {
+        return TypeToString(typeProxy.T);
+      }
+
       if (type is IntType) {
         return StringListToString(["IntType"]);
       } else if (type is BoolType) {
         return StringListToString(["BoolType"]);
-      } else if (type is UserDefinedType userDefinedType) {
-        var name = userDefinedType.Name;
+      } else if (type.IsArrayType) {
+        var arrayType = type.AsArrayType;
+        if (arrayType.Dims != 1) {
+          throw UnsupportedError(type);
+        }
+
+        // Resolve type argument
+        Contract.Assert(type.TypeArgs.Count == 1);
 
         return StringListToString([
-          "UserDefinedType",
-          EscapeAndQuote(name)
+          "ArrayType",
+          TypeToString(type.TypeArgs[0])
         ]);
       } else {
         throw UnsupportedError(type);
