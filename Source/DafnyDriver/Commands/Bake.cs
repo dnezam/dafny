@@ -259,6 +259,10 @@ namespace Microsoft.Dafny.Compilers {
             isVerbatim.ToString(),
             EscapeAndQuote((string)value)
           ]);
+        } else if (expression is StaticReceiverExpr) {
+          // We do not support receivers, so reaching the point
+          // probably means we have an unnecessary field somewhere.
+          throw UnsupportedError(expression);
         } else if (value is null) {
           valueAsString = StringListToString(["Null"]);
         } else if (value is BigInteger bigInteger) {
@@ -314,12 +318,17 @@ namespace Microsoft.Dafny.Compilers {
         var receiver = functionCallExpr.Receiver;
         var args = functionCallExpr.Args;
 
-        return StringListToString([
-          "FunctionCallExpr",
-          EscapeAndQuote(name),
-          ExpressionToString(receiver),
-          ListToString(ExpressionToString, args)
-        ]);
+        if (receiver is StaticReceiverExpr staticReceiver) {
+          // We can drop the receiver, since we only support
+          // default for now.
+          return StringListToString([
+            "FunctionCall",
+            EscapeAndQuote(name),
+            ListToString(ExpressionToString, args)
+          ]);
+        } else {
+          throw UnsupportedError(functionCallExpr);
+        }
       } else if (expression is MemberSelectExpr memberSelectExpr) {
         var obj = memberSelectExpr.Obj.Resolved;
         var name = memberSelectExpr.MemberName;
