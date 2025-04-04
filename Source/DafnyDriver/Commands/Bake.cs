@@ -82,6 +82,8 @@ namespace Microsoft.Dafny.Compilers {
         var name = function.Name;
         var ins = function.Ins;
         var resultType = function.ResultType;
+        var req = function.Req;
+        var reads = function.Reads;
         var body = function.Body;
 
         return StringListToString([
@@ -89,6 +91,8 @@ namespace Microsoft.Dafny.Compilers {
           EscapeAndQuote(name),
           ListToString(FormalToString, ins),
           TypeToString(resultType),
+          ListToString(AttributedExpressionToString, req),
+          FrameExpSpecToString(reads),
           ExpressionToString(body)
         ]);
       } else {
@@ -418,6 +422,7 @@ namespace Microsoft.Dafny.Compilers {
       rop switch {
         BinaryExpr.ResolvedOpcode.Lt => StringListToString(["Lt"]),
         BinaryExpr.ResolvedOpcode.Le => StringListToString(["Le"]),
+        BinaryExpr.ResolvedOpcode.Ge => StringListToString(["Ge"]),
         BinaryExpr.ResolvedOpcode.EqCommon => StringListToString(["Eq"]),
         BinaryExpr.ResolvedOpcode.NeqCommon => StringListToString(["Neq"]),
         BinaryExpr.ResolvedOpcode.Sub => StringListToString(["Sub"]),
