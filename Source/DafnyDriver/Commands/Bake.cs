@@ -148,7 +148,9 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "VarDecl",
           ListToString(LocalVariableToString, locals),
-          NullableStatementToString(assign)
+          NullableStatementToString(assign),
+          // Empty scope
+          "Skip"
         ]);
       } else if (statement is WhileStmt whileStmt) {
         var guard = whileStmt.Guard;
