@@ -372,9 +372,35 @@ namespace Microsoft.Dafny.Compilers {
         } else {
           throw UnsupportedError(memberSelectExpr);
         }
+      } else if (expression is ForallExpr forallExpr) {
+        var boundVars = forallExpr.BoundVars;
+        var range = forallExpr.Range;
+        var term = forallExpr.Term;
+        // NOTE Attributes probably contain triggers; these might be useful?
+
+        if (range is not null) {
+          throw UnsupportedError(forallExpr);
+        }
+
+        return StringListToString([
+          "ForallExp",
+          ListToString(BoundVarToString, boundVars),
+          ExpressionToString(term)
+        ]);
       } else {
         throw UnsupportedError(expression);
       }
+    }
+
+    public static string BoundVarToString(BoundVar boundVar) {
+      var name = boundVar.Name;
+      var type = boundVar.Type;
+
+      // Note that this is essentially a tuple
+      return StringListToString([
+        EscapeAndQuote(name),
+        TypeToString(type)
+      ]);
     }
 
     public static string LocalVariableToString(LocalVariable localVariable) {
@@ -399,6 +425,7 @@ namespace Microsoft.Dafny.Compilers {
         BinaryExpr.ResolvedOpcode.Mul => StringListToString(["Mul"]),
         BinaryExpr.ResolvedOpcode.Div => StringListToString(["Div"]),
         BinaryExpr.ResolvedOpcode.And => StringListToString(["And"]),
+        BinaryExpr.ResolvedOpcode.Imp => StringListToString(["Imp"]),
         _ => throw UnsupportedError(rop)
       };
 
