@@ -113,6 +113,15 @@ namespace Microsoft.Dafny.Compilers {
       }
     }
 
+    public static LiteralExpr InitExpr(Type type) {
+      if (type is IntType) {
+        return new LiteralExpr(Token.NoToken, 0);
+      } else {
+        throw UnsupportedError(type);
+      }
+    }
+
+
     public static string StatementToString(Statement statement) {
       if (statement is AssignStatement assignStatement) {
         var lhss = assignStatement.Lhss;
@@ -366,13 +375,32 @@ namespace Microsoft.Dafny.Compilers {
         var elementInit = allocateArray.ElementInit;
         var initDisplay = allocateArray.InitDisplay;
 
-        return StringListToString([
-          "AllocateArray",
-          TypeToString(explicitType),
-          ListToString(ExpressionToString, arrayDimensions),
-          NullableToString(ExpressionToString, elementInit),
-          NullableToString(x => ListToString(ExpressionToString, x), initDisplay)
-        ]);
+        if (arrayDimensions.Count != 1) {
+          throw UnsupportedError(arrayDimensions);
+        }
+
+        if (initDisplay is not null && elementInit is not null) {
+          // This should not happen
+          Contract.Assert(false);
+        }
+
+        var length = arrayDimensions[0];
+
+        if (initDisplay is not null) {
+          return StringListToString([
+            "AllocArrayWithDisplay",
+            ListToString(ExpressionToString, initDisplay)
+          ]);
+        } else {
+          var initValue = elementInit is null ? InitExpr(explicitType) : elementInit;
+
+          return StringListToString([
+            "AllocArray",
+            TypeToString(explicitType),
+            ExpressionToString(length),
+            ExpressionToString(initValue)
+          ]);
+        }
       } else {
         throw UnsupportedError(assignmentRhs);
       }
