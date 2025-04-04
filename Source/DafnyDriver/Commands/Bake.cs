@@ -138,7 +138,7 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "If",
           ExpressionToString(guard),
-          StatementListToString(thn.Body),
+          StatementToString(thn),
           NullableStatementToString(els)
         ]);
       } else if (statement is VarDeclStmt varDeclStmt) {
@@ -159,7 +159,7 @@ namespace Microsoft.Dafny.Compilers {
         return StringListToString([
           "While",
           ExpressionToString(guard),
-          StatementListToString(body.Body)
+          StatementToString(body)
         ]);
       } else if (statement is BlockStmt blockStmt) {
         return StatementListToString(blockStmt.Body);
