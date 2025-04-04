@@ -42,19 +42,41 @@ namespace Microsoft.Dafny.Compilers {
       ]);
     }
 
+    // Helper functions in case we need to handle these nodes less naively,
+    // that is, do more than pretending they are complicated lists of expressions
+    public static string AttributedExpressionToString(AttributedExpression attrExp) =>
+      ExpressionToString(attrExp.E);
+
+    public static string FrameExpSpecToString(Specification<FrameExpression> specs) =>
+      NullableToString(xs => ListToString(ExpressionToString, xs.Select(x => x.E)),
+        specs.Expressions);
+
+    public static string ExpSpecToString(Specification<Expression> specs) =>
+      ListToString(ExpressionToString, specs.Expressions);
+
     public static string MemberDeclToString(MemberDecl member) {
       if (member is Method method) {
         var name = method.Name;
         var ins = method.Ins;
+        var req = method.Req;
+        var ens = method.Ens;
+        var reads = method.Reads;
+        var decreases = method.Decreases;
         var outs = method.Outs;
+        var mod = method.Mod;
         var body = method.Body;
 
         return StringListToString([
           "Method",
           EscapeAndQuote(name),
           ListToString(FormalToString, ins),
+          ListToString(AttributedExpressionToString, req),
+          ListToString(AttributedExpressionToString, ens),
+          FrameExpSpecToString(reads),
+          ExpSpecToString(decreases),
           ListToString(FormalToString, outs),
-          StatementListToString(body.Body)
+          FrameExpSpecToString(mod),
+          StatementToString(body)
         ]);
       } else if (member is Function function) {
         var name = function.Name;
@@ -154,11 +176,17 @@ namespace Microsoft.Dafny.Compilers {
         ]);
       } else if (statement is WhileStmt whileStmt) {
         var guard = whileStmt.Guard;
+        var invariants = whileStmt.Invariants;
+        var decreases = whileStmt.Decreases;
+        var mod = whileStmt.Mod;
         var body = whileStmt.Body;
 
         return StringListToString([
           "While",
           ExpressionToString(guard),
+          ListToString(AttributedExpressionToString, invariants),
+          ExpSpecToString(decreases),
+          FrameExpSpecToString(mod),
           StatementToString(body)
         ]);
       } else if (statement is BlockStmt blockStmt) {
@@ -363,11 +391,14 @@ namespace Microsoft.Dafny.Compilers {
     public static string ResolvedOpcodeToString(BinaryExpr.ResolvedOpcode rop) =>
       rop switch {
         BinaryExpr.ResolvedOpcode.Lt => StringListToString(["Lt"]),
+        BinaryExpr.ResolvedOpcode.Le => StringListToString(["Le"]),
         BinaryExpr.ResolvedOpcode.EqCommon => StringListToString(["Eq"]),
         BinaryExpr.ResolvedOpcode.NeqCommon => StringListToString(["Neq"]),
         BinaryExpr.ResolvedOpcode.Sub => StringListToString(["Sub"]),
         BinaryExpr.ResolvedOpcode.Add => StringListToString(["Add"]),
+        BinaryExpr.ResolvedOpcode.Mul => StringListToString(["Mul"]),
         BinaryExpr.ResolvedOpcode.Div => StringListToString(["Div"]),
+        BinaryExpr.ResolvedOpcode.And => StringListToString(["And"]),
         _ => throw UnsupportedError(rop)
       };
 
