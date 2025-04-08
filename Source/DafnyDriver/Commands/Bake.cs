@@ -441,6 +441,7 @@ namespace Microsoft.Dafny.Compilers {
         BinaryExpr.ResolvedOpcode.Div => StringListToString(["Div"]),
         BinaryExpr.ResolvedOpcode.And => StringListToString(["And"]),
         BinaryExpr.ResolvedOpcode.Imp => StringListToString(["Imp"]),
+        BinaryExpr.ResolvedOpcode.Or => StringListToString(["Or"]),
         _ => throw UnsupportedError(rop)
       };
 
