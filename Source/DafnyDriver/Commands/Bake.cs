@@ -298,7 +298,7 @@ namespace Microsoft.Dafny.Compilers {
           var isVerbatim = stringLiteralExpr.IsVerbatim;
 
           valueAsString = StringListToString([
-            "StringV",
+            "StringLit",
             isVerbatim.ToString(),
             EscapeAndQuote((string)value)
           ]);
@@ -308,17 +308,17 @@ namespace Microsoft.Dafny.Compilers {
           throw UnsupportedError(expression);
         } else if (value is BigInteger bigInteger) {
           valueAsString = StringListToString([
-            "IntV",
+            "IntLit",
             bigInteger.ToString()
           ]);
         } else if (LiteralExpr.IsTrue(literalExpr)) {
           valueAsString = StringListToString([
-            "BoolV",
+            "BoolLit",
             "True"
           ]);
         } else if (LiteralExpr.IsFalse(literalExpr)) {
           valueAsString = StringListToString([
-            "BoolV",
+            "BoolLit",
             "False"
          ]);
         } else {
