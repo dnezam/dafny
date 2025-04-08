@@ -251,26 +251,7 @@ namespace Microsoft.Dafny.Compilers {
         expression = expression.Resolved;
       }
 
-      // Somewhat based on CloneExpr in ExtremeLemmaBodyCloner.cs
-      if (expression is ApplySuffix applySuffix) {
-        // ApplySuffix was not resolved; that's weird. Seems to be just
-        // a method call, so let's go with that.
-
-        // Get method name
-        var mse = (MemberSelectExpr)applySuffix.Lhs.Resolved;
-        Contract.Assert(mse.Member is Method);
-        var name = mse.MemberName;
-
-        // Get arguments
-        var args = applySuffix.Bindings.ArgumentBindings.
-          Select(b => b.Actual.Resolved);
-
-        return StringListToString([
-          "MethodCall",
-          EscapeAndQuote(name),
-          ListToString(ExpressionToString, args)
-        ]);
-      } else if (expression is IdentifierExpr identifierExpr) {
+      if (expression is IdentifierExpr identifierExpr) {
         var name = identifierExpr.Name;
         var type = identifierExpr.Type;
 
@@ -449,10 +430,31 @@ namespace Microsoft.Dafny.Compilers {
       if (assignmentRhs is ExprRhs exprRhs) {
         var expr = exprRhs.Expr;
 
-        return StringListToString([
-          "ExprRhs",
-          ExpressionToString(expr)
-        ]);
+        // NOTE This "translation" has been "discovered" by looking at
+        // concrete examples.
+
+        // Somewhat based on CloneExpr in ExtremeLemmaBodyCloner.cs
+        if (expr is ApplySuffix applySuffix) {
+          // Get method name
+          var mse = (MemberSelectExpr)applySuffix.Lhs.Resolved;
+          Contract.Assert(mse.Member is Method);
+          var name = mse.MemberName;
+
+          // Get arguments
+          var args = applySuffix.Bindings.ArgumentBindings.
+            Select(b => b.Actual.Resolved);
+
+          return StringListToString([
+            "MethodCall",
+            EscapeAndQuote(name),
+            ListToString(ExpressionToString, args)
+          ]);
+        } else {
+          return StringListToString([
+            "ExprRhs",
+            ExpressionToString(expr)
+          ]);
+        }
       } else if (assignmentRhs is AllocateArray allocateArray) {
         var explicitType = allocateArray.ExplicitType;
         var arrayDimensions = allocateArray.ArrayDimensions;
