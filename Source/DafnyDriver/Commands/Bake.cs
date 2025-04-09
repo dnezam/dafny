@@ -118,7 +118,9 @@ namespace Microsoft.Dafny.Compilers {
         return TypeToString(typeProxy.T);
       }
 
-      if (type is IntType) {
+      if (type.IsStringType) {
+        return StringListToString(["StringT"]);
+      } else if (type is IntType) {
         return StringListToString(["IntT"]);
       } else if (type is BoolType) {
         return StringListToString(["BoolT"]);
@@ -138,6 +140,19 @@ namespace Microsoft.Dafny.Compilers {
       } else {
         throw UnsupportedError(type);
       }
+    }
+
+    public static string ExpressionWithTypeToString(Expression expression) {
+      if (expression.WasResolved()) {
+        expression = expression.Resolved;
+      }
+
+      var type = expression.Type;
+
+      return StringListToString([
+        ExpressionToString(expression),
+        TypeToString(type)
+      ]);
     }
 
     public static LiteralExpr InitExpr(Type type) {
@@ -202,7 +217,7 @@ namespace Microsoft.Dafny.Compilers {
 
         return StringListToString([
           "Print",
-          ListToString(ExpressionToString, args)
+          ListToString(ExpressionWithTypeToString, args)
         ]);
 
       } else if (statement is ReturnStmt returnStmt) {
