@@ -13,6 +13,8 @@ namespace Microsoft.Dafny.Compilers {
 
     // TODO? Use NormalizeExpand() on types?
 
+    private static string seq_name = "Then";
+
     public static string ProgramToString(Program program) {
       var compileModules = program.CompileModules;
 
@@ -163,15 +165,59 @@ namespace Microsoft.Dafny.Compilers {
       }
     }
 
+    public static string AssignToString(List<Expression> lhss, List<AssignmentRhs> rhss) {
+      if (rhss.Count == 1 && IsMethodCall(rhss[0])) {
+        var lhss_string = ListToString(ExpressionToString, lhss);
+        var mc_string = MethodCallToString(rhss[0]);
+
+        return StringListToString([
+          "MetAssign",
+          lhss_string,
+          mc_string
+        ]);
+      } else {
+        Contract.Assert(!rhss.Any(IsMethodCall));
+        Contract.Assert(lhss.Count == rhss.Count);
+
+        var assigns = lhss.Zip(rhss,
+          (lhs, rhs) => StringListToString([
+            ExpressionToString(lhs),
+            RhsExpToString(rhs)
+          ]));
+
+        return StringListToString([
+          "ParAssign",
+          StringListToString(assigns)]);
+      }
+    }
+
+    public static string VarDeclToString(VarDeclStmt varDeclStmt, List<Statement> scope) {
+      var locals = varDeclStmt.Locals;
+      var assign = varDeclStmt.Assign;
+
+      if (assign is AssignStatement assignStatement) {
+        var lhss = assignStatement.Lhss;
+        var rhss = assignStatement.Rhss;
+
+        return StringListToString([
+          "VarDecl",
+          ListToString(LocalVariableToString, locals),
+          AssignToString(lhss, rhss),
+          StatementListToString(scope),
+        ]);
+      } else {
+        throw UnsupportedError(assign);
+      }
+    }
+
     public static string StatementToString(Statement statement) {
       if (statement is AssignStatement assignStatement) {
         var lhss = assignStatement.Lhss;
         var rhss = assignStatement.Rhss;
 
         return StringListToString([
-          "Assign",
-          ListToString(ExpressionToString, lhss),
-          ListToString(AssignmentRhsToString, rhss)
+          "AssignStmt",
+          AssignToString(lhss, rhss)
         ]);
       } else if (statement is IfStmt ifStmt) {
         var guard = ifStmt.Guard;
@@ -185,16 +231,7 @@ namespace Microsoft.Dafny.Compilers {
           NullableStatementToString(els)
         ]);
       } else if (statement is VarDeclStmt varDeclStmt) {
-        var locals = varDeclStmt.Locals;
-        var assign = varDeclStmt.Assign;
-
-        return StringListToString([
-          "VarDecl",
-          ListToString(LocalVariableToString, locals),
-          NullableStatementToString(assign),
-          // Empty scope
-          "Skip"
-        ]);
+        return VarDeclToString(varDeclStmt, null);
       } else if (statement is WhileStmt whileStmt) {
         var guard = whileStmt.Guard;
         var invariants = whileStmt.Invariants;
@@ -221,15 +258,18 @@ namespace Microsoft.Dafny.Compilers {
         ]);
 
       } else if (statement is ReturnStmt returnStmt) {
-        var rhss = returnStmt.Rhss;
+        var return_string = StringListToString(["Return"]);
+        var hiddenUpdate = returnStmt.HiddenUpdate;
 
-        // Instead of mapping "null" to None, map it to []
-        rhss ??= [];
-
-        return StringListToString([
-          "Return",
-          ListToString(AssignmentRhsToString, rhss)
-        ]);
+        if (hiddenUpdate is null) {
+          return return_string;
+        } else {
+          return StringListToString([
+            seq_name,
+            StatementToString(hiddenUpdate),
+            return_string
+          ]);
+        }
       } else if (statement is AssertStmt assertStmt) {
         var expr = assertStmt.Expr;
 
@@ -247,15 +287,10 @@ namespace Microsoft.Dafny.Compilers {
         [] => StringListToString(["Skip"]),
         [var stmt] => StatementToString(stmt),
         [VarDeclStmt varDecl, .. var rest] =>
-          StringListToString([
-            "VarDecl",
-            ListToString(LocalVariableToString, varDecl.Locals),
-            NullableStatementToString(varDecl.Assign),
-            StatementListToString(rest)
-        ]),
+          VarDeclToString(varDecl, rest),
         [var stmt, .. var rest] =>
           StringListToString([
-            "Then",
+            seq_name,
             StatementToString(stmt),
             StatementListToString(rest)
           ])
@@ -441,35 +476,45 @@ namespace Microsoft.Dafny.Compilers {
         _ => throw UnsupportedError(rop)
       };
 
-    public static string AssignmentRhsToString(AssignmentRhs assignmentRhs) {
+    // Method calls are special right-hand side expressions, as they can return
+    // multiple things; hence, we deal with them separately.
+
+    // Determining method calls like this has been "discovered" by looking at
+    // concrete examples, and CloneExpr in ExtremeLemmaBodyCloner.cs
+    public static bool IsMethodCall(AssignmentRhs rhs) =>
+      rhs is ExprRhs exprRhs && exprRhs.Expr is ApplySuffix;
+
+    public static string MethodCallToString(AssignmentRhs rhs) {
+      Contract.Assert(IsMethodCall(rhs));
+
+      var exprRhs = (ExprRhs)rhs;
+      var expr = exprRhs.Expr;
+      var applySuffix = (ApplySuffix)expr;
+      var mse = (MemberSelectExpr)applySuffix.Lhs.Resolved;
+      Contract.Assert(mse.Member is Method);
+      var name = mse.MemberName;
+
+      // Get arguments
+      var args = applySuffix.Bindings.ArgumentBindings.
+        Select(b => b.Actual.Resolved);
+
+      return StringListToString([
+        "MethodCall",
+        EscapeAndQuote(name),
+        ListToString(ExpressionToString, args)
+      ]);
+    }
+
+    public static string RhsExpToString(AssignmentRhs assignmentRhs) {
+      Contract.Assert(!IsMethodCall(assignmentRhs));
+
       if (assignmentRhs is ExprRhs exprRhs) {
         var expr = exprRhs.Expr;
 
-        // NOTE This "translation" has been "discovered" by looking at
-        // concrete examples.
-
-        // Somewhat based on CloneExpr in ExtremeLemmaBodyCloner.cs
-        if (expr is ApplySuffix applySuffix) {
-          // Get method name
-          var mse = (MemberSelectExpr)applySuffix.Lhs.Resolved;
-          Contract.Assert(mse.Member is Method);
-          var name = mse.MemberName;
-
-          // Get arguments
-          var args = applySuffix.Bindings.ArgumentBindings.
-            Select(b => b.Actual.Resolved);
-
-          return StringListToString([
-            "MethodCall",
-            EscapeAndQuote(name),
-            ListToString(ExpressionToString, args)
-          ]);
-        } else {
-          return StringListToString([
-            "ExprRhs",
-            ExpressionToString(expr)
-          ]);
-        }
+        return StringListToString([
+          "ExprRhs",
+          ExpressionToString(expr)
+        ]);
       } else if (assignmentRhs is AllocateArray allocateArray) {
         var explicitType = allocateArray.ExplicitType;
         var arrayDimensions = allocateArray.ArrayDimensions;
