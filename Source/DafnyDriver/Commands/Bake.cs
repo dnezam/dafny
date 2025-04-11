@@ -74,7 +74,7 @@ namespace Microsoft.Dafny.Compilers {
         var body = method.Body;
         var bodyBody = body.Body;
 
-        if (bodyBody.Count == 0 || bodyBody[bodyBody.Count-1] is not ReturnStmt) {
+        if (bodyBody.Count == 0 || bodyBody[bodyBody.Count - 1] is not ReturnStmt) {
           body.AppendStmt(new ReturnStmt(Token.NoToken, null, null));
         }
 
@@ -172,49 +172,20 @@ namespace Microsoft.Dafny.Compilers {
       }
     }
 
-    public static string AssignToString(List<Expression> lhss, List<AssignmentRhs> rhss) {
-      if (rhss.Count == 1 && IsMethodCall(rhss[0])) {
-        var lhss_string = ListToString(ExpressionToString, lhss);
-        var mc_string = MethodCallToString(rhss[0]);
-
-        return StringListToString([
-          "MetAssign",
-          lhss_string,
-          mc_string
-        ]);
-      } else {
-        Contract.Assert(!rhss.Any(IsMethodCall));
-        Contract.Assert(lhss.Count == rhss.Count);
-
-        var assigns = lhss.Zip(rhss,
-          (lhs, rhs) => StringListToString([
-            ExpressionToString(lhs),
-            RhsExpToString(rhs)
-          ]));
-
-        return StringListToString([
-          "ParAssign",
-          StringListToString(assigns)]);
-      }
-    }
-
     public static string VarDeclToString(VarDeclStmt varDeclStmt, List<Statement> scope) {
       var locals = varDeclStmt.Locals;
       var assign = varDeclStmt.Assign;
 
-      if (assign is AssignStatement assignStatement) {
-        var lhss = assignStatement.Lhss;
-        var rhss = assignStatement.Rhss;
-
-        return StringListToString([
-          "VarDecl",
-          ListToString(LocalVariableToString, locals),
-          AssignToString(lhss, rhss),
-          StatementListToString(scope),
-        ]);
-      } else {
-        throw UnsupportedError(assign);
+      // Make assignment part of scope
+      if (assign is not null) {
+        scope.Insert(0, assign);
       }
+
+      return StringListToString([
+        "Dec",
+        ListToString(LocalVariableToString, locals),
+        StatementListToString(scope),
+      ]);
     }
 
     public static string StatementToString(Statement statement) {
@@ -222,10 +193,17 @@ namespace Microsoft.Dafny.Compilers {
         var lhss = assignStatement.Lhss;
         var rhss = assignStatement.Rhss;
 
-        return StringListToString([
-          "AssignStmt",
-          AssignToString(lhss, rhss)
-        ]);
+        if (rhss.Count == 1 && IsMethodCall(rhss[0])) {
+          return MethodCallToString(lhss, rhss[0]);
+        } else {
+          Contract.Assert(!rhss.Any(IsMethodCall));
+          Contract.Assert(lhss.Count == rhss.Count);
+
+          return StringListToString([
+            "Assign",
+            ListToString(ExpressionToString, lhss),
+            ListToString(RhsExpToString, rhss)]);
+        }
       } else if (statement is IfStmt ifStmt) {
         var guard = ifStmt.Guard;
         var thn = ifStmt.Thn;
@@ -491,7 +469,7 @@ namespace Microsoft.Dafny.Compilers {
     public static bool IsMethodCall(AssignmentRhs rhs) =>
       rhs is ExprRhs exprRhs && exprRhs.Expr is ApplySuffix;
 
-    public static string MethodCallToString(AssignmentRhs rhs) {
+    public static string MethodCallToString(List<Expression> lhss, AssignmentRhs rhs) {
       Contract.Assert(IsMethodCall(rhs));
 
       var exprRhs = (ExprRhs)rhs;
@@ -506,7 +484,8 @@ namespace Microsoft.Dafny.Compilers {
         Select(b => b.Actual.Resolved);
 
       return StringListToString([
-        "MethodCall",
+        "MetCall",
+        ListToString(ExpressionToString, lhss),
         EscapeAndQuote(name),
         ListToString(ExpressionToString, args)
       ]);
