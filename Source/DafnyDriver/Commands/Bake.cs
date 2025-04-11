@@ -69,7 +69,14 @@ namespace Microsoft.Dafny.Compilers {
         var decreases = method.Decreases;
         var outs = method.Outs;
         var mod = method.Mod;
+
+        // Make sure there is a return statement at the end
         var body = method.Body;
+        var bodyBody = body.Body;
+
+        if (bodyBody.Count == 0 || bodyBody[bodyBody.Count-1] is not ReturnStmt) {
+          body.AppendStmt(new ReturnStmt(Token.NoToken, null, null));
+        }
 
         return StringListToString([
           "Method",
