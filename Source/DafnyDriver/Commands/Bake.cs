@@ -313,9 +313,12 @@ namespace Microsoft.Dafny.Compilers {
         if (expression is StringLiteralExpr stringLiteralExpr) {
           var isVerbatim = stringLiteralExpr.IsVerbatim;
 
+          if (isVerbatim) {
+            throw UnsupportedError(stringLiteralExpr);
+          }
+
           valueAsString = StringListToString([
             "StrL",
-            isVerbatim.ToString(),
             EscapeAndQuote((string)value)
           ]);
         } else if (expression is StaticReceiverExpr) {
