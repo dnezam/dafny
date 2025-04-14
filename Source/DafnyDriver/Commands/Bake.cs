@@ -96,6 +96,7 @@ namespace Microsoft.Dafny.Compilers {
         var resultType = function.ResultType;
         var req = function.Req;
         var reads = function.Reads;
+        var decreases = function.Decreases;
         var body = function.Body;
 
         return StringListToString([
@@ -105,6 +106,7 @@ namespace Microsoft.Dafny.Compilers {
           TypeToString(resultType),
           ListToString(AttributedExpressionToString, req),
           FrameExpSpecToString(reads),
+          ExpSpecToString(decreases),
           ExpressionToString(body)
         ]);
       } else {
@@ -128,7 +130,7 @@ namespace Microsoft.Dafny.Compilers {
       }
 
       if (type.IsStringType) {
-        return StringListToString(["StringT"]);
+        return StringListToString(["StrT"]);
       } else if (type is IntType) {
         return StringListToString(["IntT"]);
       } else if (type is BoolType) {
@@ -143,7 +145,7 @@ namespace Microsoft.Dafny.Compilers {
         Contract.Assert(type.TypeArgs.Count == 1);
 
         return StringListToString([
-          "ArrayT",
+          "ArrT",
           TypeToString(type.TypeArgs[0])
         ]);
       } else {
@@ -288,12 +290,10 @@ namespace Microsoft.Dafny.Compilers {
 
       if (expression is IdentifierExpr identifierExpr) {
         var name = identifierExpr.Name;
-        var type = identifierExpr.Type;
 
         return StringListToString([
-          "IdentifierExp",
-          EscapeAndQuote(name),
-          TypeToString(type)
+          "Var",
+          EscapeAndQuote(name)
         ]);
       } else if (expression is BinaryExpr binaryExpr) {
         var rop = binaryExpr.ResolvedOp;
@@ -301,7 +301,7 @@ namespace Microsoft.Dafny.Compilers {
         var e1 = binaryExpr.E1;
 
         return StringListToString([
-          "BinaryExp",
+          "BinOp",
           ResolvedOpcodeToString(rop),
           ExpressionToString(e0),
           ExpressionToString(e1)
@@ -314,7 +314,7 @@ namespace Microsoft.Dafny.Compilers {
           var isVerbatim = stringLiteralExpr.IsVerbatim;
 
           valueAsString = StringListToString([
-            "StringLit",
+            "StrL",
             isVerbatim.ToString(),
             EscapeAndQuote((string)value)
           ]);
@@ -324,17 +324,17 @@ namespace Microsoft.Dafny.Compilers {
           throw UnsupportedError(expression);
         } else if (value is BigInteger bigInteger) {
           valueAsString = StringListToString([
-            "IntLit",
+            "IntL",
             bigInteger.ToString()
           ]);
         } else if (LiteralExpr.IsTrue(literalExpr)) {
           valueAsString = StringListToString([
-            "BoolLit",
+            "BoolL",
             "True"
           ]);
         } else if (LiteralExpr.IsFalse(literalExpr)) {
           valueAsString = StringListToString([
-            "BoolLit",
+            "BoolL",
             "False"
          ]);
         } else {
@@ -342,7 +342,7 @@ namespace Microsoft.Dafny.Compilers {
         }
 
         return StringListToString([
-          "LiteralExp",
+          "Lit",
           valueAsString
         ]);
       } else if (expression is SeqSelectExpr seqSelectExpr) {
@@ -354,7 +354,7 @@ namespace Microsoft.Dafny.Compilers {
         if (selectOne && seq.Type.IsArrayType) {
           Contract.Assert(e0 != null && e1 == null);
           return StringListToString([
-            "ArraySelect",
+            "ArrSel",
             ExpressionToString(seq),
             ExpressionToString(e0)
           ]);
@@ -367,7 +367,7 @@ namespace Microsoft.Dafny.Compilers {
         var els = iteeExpr.Els;
 
         return StringListToString([
-          "ITE",
+          "Exp_If",
           ExpressionToString(test),
           ExpressionToString(thn),
           ExpressionToString(els)
@@ -382,7 +382,7 @@ namespace Microsoft.Dafny.Compilers {
           // We can drop the receiver, since we only support
           // default for now.
           return StringListToString([
-            "FunctionCall",
+            "FunCall",
             EscapeAndQuote(name),
             ListToString(ExpressionToString, args)
           ]);
@@ -397,31 +397,46 @@ namespace Microsoft.Dafny.Compilers {
         var type = obj.Type;
         if (name == "Length" && type.IsArrayType && type.AsArrayType.Dims == 1) {
           return StringListToString([
-            "ArrayLen",
+            "ArrLen",
             ExpressionToString(obj)
           ]);
         } else {
           throw UnsupportedError(memberSelectExpr);
         }
       } else if (expression is ForallExpr forallExpr) {
+        // NOTE We ignore attributes, which may contain triggers; these might be useful?
+        var origin = forallExpr.Origin;
         var boundVars = forallExpr.BoundVars;
         var range = forallExpr.Range;
         var term = forallExpr.Term;
-        // NOTE Attributes probably contain triggers; these might be useful?
 
         if (range is not null) {
           throw UnsupportedError(forallExpr);
         }
 
+        var splitForall = SplitForall(origin, boundVars, term);
+
+        // At this point, we know that we have exactly one bound var
+
         return StringListToString([
-          "ForallExp",
-          ListToString(BoundVarToString, boundVars),
-          ExpressionToString(term)
+          "Forall",
+          BoundVarToString(splitForall.BoundVars[0]),
+          ExpressionToString(splitForall.Term)
         ]);
       } else {
         throw UnsupportedError(expression);
       }
     }
+
+    public static ForallExpr SplitForall(IOrigin origin, List<BoundVar> boundVars, Expression term) =>
+      // NOTE Assumes that range is null
+      boundVars switch {
+        [] => throw new Exception("Expected at least one bound variable"),
+        [BoundVar boundVar] =>
+          new ForallExpr(origin, [boundVar], null, term),
+        [BoundVar boundVar, .. var rest] =>
+          new ForallExpr(origin, [boundVar], null, SplitForall(origin, rest, term))
+      };
 
     public static string BoundVarToString(BoundVar boundVar) {
       var name = boundVar.Name;
@@ -498,7 +513,7 @@ namespace Microsoft.Dafny.Compilers {
         var expr = exprRhs.Expr;
 
         return StringListToString([
-          "ExprRhs",
+          "ExpRhs",
           ExpressionToString(expr)
         ]);
       } else if (assignmentRhs is AllocateArray allocateArray) {
@@ -524,7 +539,7 @@ namespace Microsoft.Dafny.Compilers {
           var initValue = elementInit is null ? InitExpr(explicitType) : elementInit;
 
           return StringListToString([
-            "AllocArray",
+            "ArrAlloc",
             TypeToString(explicitType),
             ExpressionToString(length),
             ExpressionToString(initValue)
