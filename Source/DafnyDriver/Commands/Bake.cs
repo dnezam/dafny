@@ -295,6 +295,15 @@ namespace Microsoft.Dafny.Compilers {
           "Var",
           EscapeAndQuote(name)
         ]);
+      } else if (expression is UnaryOpExpr unaryOpExpr) {
+        var rop = unaryOpExpr.ResolvedOp;
+        var e = unaryOpExpr.E;
+
+        return StringListToString([
+          "UnOp",
+          ResolvedUnOpcodeToString(rop),
+          ExpressionToString(e)
+        ]);
       } else if (expression is BinaryExpr binaryExpr) {
         var rop = binaryExpr.ResolvedOp;
         var e0 = binaryExpr.E0;
@@ -302,7 +311,7 @@ namespace Microsoft.Dafny.Compilers {
 
         return StringListToString([
           "BinOp",
-          ResolvedOpcodeToString(rop),
+          ResolvedBinOpcodeToString(rop),
           ExpressionToString(e0),
           ExpressionToString(e1)
         ]);
@@ -462,7 +471,13 @@ namespace Microsoft.Dafny.Compilers {
       ]);
     }
 
-    public static string ResolvedOpcodeToString(BinaryExpr.ResolvedOpcode rop) =>
+    public static string ResolvedUnOpcodeToString(UnaryOpExpr.ResolvedOpcode rop) =>
+      rop switch {
+        UnaryOpExpr.ResolvedOpcode.BoolNot => StringListToString(["Not"]),
+        _ => throw UnsupportedError(rop)
+      };
+
+    public static string ResolvedBinOpcodeToString(BinaryExpr.ResolvedOpcode rop) =>
       rop switch {
         BinaryExpr.ResolvedOpcode.Lt => StringListToString(["Lt"]),
         BinaryExpr.ResolvedOpcode.Le => StringListToString(["Le"]),
