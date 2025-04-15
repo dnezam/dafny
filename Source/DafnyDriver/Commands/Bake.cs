@@ -190,6 +190,47 @@ namespace Microsoft.Dafny.Compilers {
       ]);
     }
 
+    public static string IdentifierExprToString(IdentifierExpr identifierExpr, bool isLhs) {
+      var name = identifierExpr.Name;
+
+      return StringListToString([
+        isLhs ? "VarLhs" : "Var",
+        EscapeAndQuote(name)
+      ]);
+    }
+
+    public static string SeqSelectExprToString(SeqSelectExpr seqSelectExpr, bool isLhs) {
+      var selectOne = seqSelectExpr.SelectOne;
+      var seq = seqSelectExpr.Seq;
+      var e0 = seqSelectExpr.E0;
+      var e1 = seqSelectExpr.E1;
+
+      if (selectOne && seq.Type.IsArrayType) {
+        Contract.Assert(e0 != null && e1 == null);
+        return StringListToString([
+          isLhs ? "ArrSelLhs" : "ArrSel",
+          ExpressionToString(seq),
+          ExpressionToString(e0)
+        ]);
+      } else {
+        throw UnsupportedError(seqSelectExpr);
+      }
+    }
+
+    public static string LhsToString(Expression expression) {
+      if (expression.WasResolved()) {
+        expression = expression.Resolved;
+      }
+
+      if (expression is IdentifierExpr identifierExpr) {
+        return IdentifierExprToString(identifierExpr, true);
+      } else if (expression is SeqSelectExpr seqSelectExpr) {
+        return SeqSelectExprToString(seqSelectExpr, true);
+      } else {
+        throw UnsupportedError(expression);
+      }
+    }
+
     public static string StatementToString(Statement statement) {
       if (statement is AssignStatement assignStatement) {
         var lhss = assignStatement.Lhss;
@@ -203,7 +244,7 @@ namespace Microsoft.Dafny.Compilers {
 
           return StringListToString([
             "Assign",
-            ListToString(ExpressionToString, lhss),
+            ListToString(LhsToString, lhss),
             ListToString(RhsExpToString, rhss)]);
         }
       } else if (statement is IfStmt ifStmt) {
@@ -289,12 +330,7 @@ namespace Microsoft.Dafny.Compilers {
       }
 
       if (expression is IdentifierExpr identifierExpr) {
-        var name = identifierExpr.Name;
-
-        return StringListToString([
-          "Var",
-          EscapeAndQuote(name)
-        ]);
+        return IdentifierExprToString(identifierExpr, false);
       } else if (expression is UnaryOpExpr unaryOpExpr) {
         var rop = unaryOpExpr.ResolvedOp;
         var e = unaryOpExpr.E;
@@ -358,21 +394,7 @@ namespace Microsoft.Dafny.Compilers {
           valueAsString
         ]);
       } else if (expression is SeqSelectExpr seqSelectExpr) {
-        var selectOne = seqSelectExpr.SelectOne;
-        var seq = seqSelectExpr.Seq;
-        var e0 = seqSelectExpr.E0;
-        var e1 = seqSelectExpr.E1;
-
-        if (selectOne && seq.Type.IsArrayType) {
-          Contract.Assert(e0 != null && e1 == null);
-          return StringListToString([
-            "ArrSel",
-            ExpressionToString(seq),
-            ExpressionToString(e0)
-          ]);
-        } else {
-          throw UnsupportedError(seqSelectExpr);
-        }
+        return SeqSelectExprToString(seqSelectExpr, false);
       } else if (expression is ITEExpr iteeExpr) {
         var test = iteeExpr.Test;
         var thn = iteeExpr.Thn;
@@ -518,7 +540,7 @@ namespace Microsoft.Dafny.Compilers {
 
       return StringListToString([
         "MetCall",
-        ListToString(ExpressionToString, lhss),
+        ListToString(LhsToString, lhss),
         EscapeAndQuote(name),
         ListToString(ExpressionToString, args)
       ]);
