@@ -535,7 +535,6 @@ namespace Microsoft.Dafny.Compilers {
           ExpressionToString(expr)
         ]);
       } else if (assignmentRhs is AllocateArray allocateArray) {
-        var explicitType = allocateArray.ExplicitType;
         var arrayDimensions = allocateArray.ArrayDimensions;
         var elementInit = allocateArray.ElementInit;
         var initDisplay = allocateArray.InitDisplay;
@@ -554,11 +553,10 @@ namespace Microsoft.Dafny.Compilers {
         if (initDisplay is not null) {
           throw UnsupportedError(assignmentRhs);
         } else {
-          var initValue = elementInit is null ? InitExpr(explicitType) : elementInit;
+          var initValue = elementInit is null ? InitExpr(allocateArray.ExplicitType) : elementInit;
 
           return StringListToString([
             "ArrAlloc",
-            TypeToString(explicitType),
             ExpressionToString(length),
             ExpressionToString(initValue)
           ]);
