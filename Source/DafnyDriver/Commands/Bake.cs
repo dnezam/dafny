@@ -522,7 +522,7 @@ namespace Microsoft.Dafny.Compilers {
     // Determining method calls like this has been "discovered" by looking at
     // concrete examples, and CloneExpr in ExtremeLemmaBodyCloner.cs
     public static bool IsMethodCall(AssignmentRhs rhs) =>
-      rhs is ExprRhs exprRhs && exprRhs.Expr is ApplySuffix;
+      rhs is ExprRhs exprRhs && exprRhs.Expr is ApplySuffix && !exprRhs.Expr.WasResolved();
 
     public static string MethodCallToString(List<Expression> lhss, AssignmentRhs rhs) {
       Contract.Assert(IsMethodCall(rhs));
