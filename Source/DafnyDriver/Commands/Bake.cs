@@ -173,6 +173,16 @@ namespace Microsoft.Dafny.Compilers {
         throw UnsupportedError(type);
       }
     }
+    public static string VarDeclToStringAux(List<Statement> scope, List<LocalVariable> localsVars) {
+      string BuildString(LocalVariable var, string rest) =>
+          StringListToString(["Dec", LocalVariableToString(var), rest]);
+
+      return localsVars switch {
+        [] => throw new Exception("Expected at least one local to be declared"),
+        [LocalVariable localVar] => BuildString(localVar, StatementListToString(scope)),
+        [LocalVariable localVar, .. var rest] => BuildString(localVar, VarDeclToStringAux(scope, rest))
+      };
+    }
 
     public static string VarDeclToString(VarDeclStmt varDeclStmt, List<Statement> scope) {
       var locals = varDeclStmt.Locals;
@@ -183,11 +193,7 @@ namespace Microsoft.Dafny.Compilers {
         scope.Insert(0, assign);
       }
 
-      return StringListToString([
-        "Dec",
-        ListToString(LocalVariableToString, locals),
-        StatementListToString(scope),
-      ]);
+      return VarDeclToStringAux(scope, locals);
     }
 
     public static string IdentifierExprToString(IdentifierExpr identifierExpr, bool isLhs) {
