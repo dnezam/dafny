@@ -153,19 +153,6 @@ namespace Microsoft.Dafny.Compilers {
       }
     }
 
-    public static string ExpressionWithTypeToString(Expression expression) {
-      if (expression.WasResolved()) {
-        expression = expression.Resolved;
-      }
-
-      var type = expression.Type;
-
-      return StringListToString([
-        ExpressionToString(expression),
-        TypeToString(type)
-      ]);
-    }
-
     public static LiteralExpr InitExpr(Type type) {
       if (type is IntType) {
         return new LiteralExpr(Token.NoToken, 0);
@@ -237,6 +224,32 @@ namespace Microsoft.Dafny.Compilers {
       }
     }
 
+    public static string SimplePrintToString(Expression arg) {
+      if (arg.WasResolved()) {
+        arg = arg.Resolved;
+      }
+
+      var type = arg.Type;
+
+      return StringListToString([
+        "Print",
+        ExpressionToString(arg),
+        TypeToString(type)
+      ]);
+    }
+
+    public static string SplitPrintToString(List<Expression> args) =>
+      args switch {
+        [] => "",
+        [Expression arg] => SimplePrintToString(arg),
+        [Expression arg, .. var rest] =>
+          StringListToString([
+            seq_name,
+            SimplePrintToString(arg),
+            SplitPrintToString(rest)
+          ])
+      };
+
     public static string StatementToString(Statement statement) {
       if (statement is AssignStatement assignStatement) {
         var lhss = assignStatement.Lhss;
@@ -286,10 +299,7 @@ namespace Microsoft.Dafny.Compilers {
       } else if (statement is PrintStmt printStmt) {
         var args = printStmt.Args;
 
-        return StringListToString([
-          "Print",
-          ListToString(ExpressionWithTypeToString, args)
-        ]);
+        return SplitPrintToString(args);
 
       } else if (statement is ReturnStmt returnStmt) {
         var return_string = StringListToString(["Return"]);
