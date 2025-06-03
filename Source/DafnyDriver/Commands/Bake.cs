@@ -250,6 +250,17 @@ namespace Microsoft.Dafny.Compilers {
           ])
       };
 
+    public static IEnumerable<string> AssignToString(List<Expression> lhss, List<AssignmentRhs> rhss) =>
+      (lhss, rhss) switch {
+        ([], []) => [],
+        ([Expression lhs, .. var lhssRest], [AssignmentRhs rhs, .. var rhssRest]) =>
+          AssignToString(lhssRest, rhssRest).Prepend(
+            StringListToString([
+              LhsToString(lhs),
+              RhsExpToString(rhs)])),
+          _ => throw new Exception("Expected equal number of LHS and RHS expressions")
+      };
+
     public static string StatementToString(Statement statement) {
       if (statement is AssignStatement assignStatement) {
         var lhss = assignStatement.Lhss;
@@ -263,8 +274,8 @@ namespace Microsoft.Dafny.Compilers {
 
           return StringListToString([
             "Assign",
-            ListToString(LhsToString, lhss),
-            ListToString(RhsExpToString, rhss)]);
+            StringListToString(AssignToString(lhss, rhss))
+          ]);
         }
       } else if (statement is IfStmt ifStmt) {
         var guard = ifStmt.Guard;
