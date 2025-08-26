@@ -484,6 +484,18 @@ namespace Microsoft.Dafny.Compilers {
           BoundVarToString(splitForall.BoundVars[0]),
           ExpressionToString(splitForall.Term)
         ]);
+      } else if (expression is OldExpr oldExpr) {
+        var e = oldExpr.E;
+        var atLabel = oldExpr.AtLabel;
+
+        if (atLabel is not null) {
+          throw UnsupportedError(oldExpr);
+        }
+
+        return StringListToString([
+          "Old",
+          ExpressionToString(e)
+        ]);
       } else {
         throw UnsupportedError(expression);
       }
