@@ -600,6 +600,7 @@ namespace Microsoft.Dafny.Compilers {
         var arrayDimensions = allocateArray.ArrayDimensions;
         var elementInit = allocateArray.ElementInit;
         var initDisplay = allocateArray.InitDisplay;
+        var explicitType = allocateArray.ExplicitType;
 
         if (arrayDimensions.Count != 1) {
           throw UnsupportedError(arrayDimensions);
@@ -620,7 +621,8 @@ namespace Microsoft.Dafny.Compilers {
           return StringListToString([
             "ArrAlloc",
             ExpressionToString(length),
-            ExpressionToString(initValue)
+            ExpressionToString(initValue),
+            TypeToString(explicitType)
           ]);
         }
       } else {
