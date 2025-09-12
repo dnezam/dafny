@@ -493,7 +493,7 @@ namespace Microsoft.Dafny.Compilers {
         }
 
         return StringListToString([
-          "Old",
+          "OldHeap",
           ExpressionToString(e)
         ]);
       } else {
