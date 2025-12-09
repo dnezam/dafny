@@ -652,7 +652,7 @@ namespace Microsoft.Dafny.Compilers {
       StringBuilder sb = new StringBuilder();
       sb.Append('"');
       foreach (char c in str) {
-        if (c == '"' || c == '\\') {
+        if (c == '"') {
           sb.Append('\\');
         }
         sb.Append(c);
